@@ -27,7 +27,7 @@ def get_unread_count():
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT COUNT(*) as cnt FROM notifications WHERE student_id = %s AND is_read = 0", (session['student_id'],))
-        count = cur.fetchone()['cnt']
+        count = cur.fetchone()['0']
         cur.close()
         conn.close()
         return count
