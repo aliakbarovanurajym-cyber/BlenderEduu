@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Бағаларым{% endblock %}
+
+{% block extra_css %}
+<style>
+    .grades-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .grades-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+    .grades-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+
+    .overall-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+    .overall-score { font-size: 4rem; font-weight: 800; color: #6366f1; }
+    .overall-label { color: #64748b; font-size: 1.1rem; margin-top: 0.5rem; }
+
+    .score-breakdown {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    .breakdown-item { background: #f8fafc; padding: 1.5rem; border-radius: 15px; }
+    .breakdown-value { font-size: 2rem; font-weight: 800; color: var(--dark); }
+    .breakdown-label { color: #64748b; font-size: 0.9rem; }
+
+    .section-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+
+    .grade-table { width: 100%; border-collapse: collapse; }
+    .grade-table th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
+    .grade-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+    .grade-table tr:hover { background: #f9fafb; }
+
+    .score-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+    }
+    .score-high { background: #d1fae5; color: #065f46; }
+    .score-mid { background: #fff3cd; color: #856404; }
+    .score-low { background: #fee2e2; color: #991b1b; }
+
+    .topic-tag { background: #e0e7ff; color: #6366f1; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600; }
+    .type-tag { background: #f3e8ff; color: #7c3aed; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; }
+
+    .empty-state { text-align: center; padding: 3rem; color: #64748b; }
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
+    .progress-ring {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+    .progress-ring-circle {
+        transition: stroke-dashoffset 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grades-container">
+    <div class="grades-header">
+        <a href="/student_dashboard" class="back-btn" style="color: white; opacity: 0.8; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <i class="fas fa-arrow-left"></i> Оқушы панелі
+        </a>
+        <h1><i class="fas fa-chart-bar"></i> Бағаларым</h1>
+        <p>Интерактивті тапсырмалар және практикалық жобалар бағалары</p>
+    </div>
+
+    <div class="overall-card">
+        <div class="overall-score">{{ avg_percent }}%</div>
+        <div class="overall-label">Жалпы орташа балл</div>
+
+        <div class="score-breakdown">
+            <div class="breakdown-item">
+                <div class="breakdown-value" style="color: #6366f1;">{{ total_task_score }}</div>
+                <div class="breakdown-label">Интерактивті тапсырмалар</div>
+            </div>
+            <div class="breakdown-item">
+                <div class="breakdown-value" style="color: #10b981;">{{ total_project_score }}</div>
+                <div class="breakdown-label">Практикалық жобалар</div>
+            </div>
+            <div class="breakdown-item">
+                <div class="breakdown-value" style="color: #f472b6;">{{ total_score }}</div>
+                <div class="breakdown-label">Жалпы балл</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Интерактивті тапсырмалар бағалары -->
+    <div class="section-card">
+        <h2 class="section-title"><i class="fas fa-tasks" style="color: #6366f1;"></i> Интерактивті тапсырмалар</h2>
+
+        {% if task_grades %}
+        <div style="overflow-x: auto;">
+            <table class="grade-table">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Тақырып</th>
+                        <th>Тапсырма</th>
+                        <th>Түрі</th>
+                        <th>Балл</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in task_grades %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><span class="topic-tag">{{ grade.topic_title }}</span></td>
+                        <td>{{ grade.question[:50] }}{% if grade.question|length > 50 %}...{% endif %}</td>
+                        <td>
+                            <span class="type-tag">
+                                {% if grade.task_type == 'multiple_choice' %}Көп нұсқалы{% endif %}
+                                {% if grade.task_type == 'fill_blank' %}Бос орын{% endif %}
+                                {% if grade.task_type == 'matching' %}Сәйкестендіру{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="score-badge 
+                                {% if grade.score >= 8 %}score-high{% endif %}
+                                {% if grade.score >= 5 and grade.score < 8 %}score-mid{% endif %}
+                                {% if grade.score < 5 %}score-low{% endif %}">
+                                <i class="fas fa-star"></i> {{ grade.score }}/{{ grade.points }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list">&#128196;</i>
+            <p>Әлі тапсырма орындалмаған</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Практикалық жоба бағалары -->
+    <div class="section-card">
+        <h2 class="section-title"><i class="fas fa-folder-open" style="color: #10b981;"></i> Практикалық жобалар</h2>
+
+        {% if project_grades %}
+        <div style="overflow-x: auto;">
+            <table class="grade-table">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Тақырып</th>
+                        <th>Жүктелген</th>
+                        <th>Бағаланған</th>
+                        <th>Баға</th>
+                        <th>Пікір</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in project_grades %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><span class="topic-tag">{{ grade.topic_title }}</span></td>
+                        <td>{{ grade.submitted_at[:10] }}</td>
+                        <td>{{ grade.graded_at[:10] if grade.graded_at else '-' }}</td>
+                        <td>
+                            <span class="score-badge 
+                                {% if grade.teacher_score >= 8 %}score-high{% endif %}
+                                {% if grade.teacher_score >= 5 and grade.teacher_score < 8 %}score-mid{% endif %}
+                                {% if grade.teacher_score < 5 %}score-low{% endif %}">
+                                <i class="fas fa-star"></i> {{ grade.teacher_score }}/10
+                            </span>
+                        </td>
+                        <td>{{ grade.teacher_comment or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder">&#128193;</i>
+            <p>Әлі жоба бағаланбаған</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

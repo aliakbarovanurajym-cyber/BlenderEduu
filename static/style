@@ -1,0 +1,97 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0a192f, #020c1b);
+    color: white;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 40px;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+}
+
+.navbar h2 {
+    color: #00b4ff;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    padding: 120px 20px;
+}
+
+.hero h1 {
+    font-size: 48px;
+    color: #00b4ff;
+}
+
+.hero p {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+.buttons a {
+    display: inline-block;
+    margin: 15px;
+    padding: 12px 25px;
+    border-radius: 30px;
+    background: #00b4ff;
+    color: white;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.buttons a:hover {
+    background: #0090cc;
+    transform: scale(1.05);
+}
+
+/* Card */
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    margin: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    background: #020c1b;
+    padding: 20px;
+}
+
+.sidebar a {
+    display: block;
+    color: white;
+    margin: 15px 0;
+    text-decoration: none;
+}
+
+/* Content */
+.content {
+    margin-left: 270px;
+    padding: 20px;
+}
+
+/* Button */
+.btn {
+    background: #00b4ff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    color: white;
+}

@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}Оқушы панелі{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .dashboard-subtitle {
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    .user-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .user-stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .user-stat-info h3 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--dark);
+    }
+
+    .user-stat-info p {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .progress-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .progress-percent {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #6366f1;
+    }
+
+    .certificate-banner {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .certificate-banner.locked {
+        background: linear-gradient(135deg, #64748b, #666);
+    }
+
+    .certificate-text {
+        font-weight: 600;
+    }
+
+    .badges-section {
+        margin-bottom: 2rem;
+    }
+
+    .badges-grid {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .badge-item {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+        transition: all 0.3s;
+    }
+
+    .badge-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+    }
+
+    .leaderboard-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .leaderboard-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .leaderboard-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid #f0f2f5;
+        transition: all 0.3s;
+    }
+
+    .leaderboard-item:hover {
+        background: #f9fafb;
+        border-radius: 10px;
+    }
+
+    .leaderboard-rank {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; }
+    .rank-2 { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); color: white; }
+    .rank-3 { background: linear-gradient(135deg, #CD7F32, #B87333); color: white; }
+    .rank-other { background: #f0f2f5; color: #666; }
+
+    .leaderboard-info {
+        flex: 1;
+    }
+
+    .leaderboard-name {
+        font-weight: 700;
+    }
+
+    .leaderboard-class {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .leaderboard-xp {
+        font-weight: 800;
+        color: #6366f1;
+    }
+
+    .topics-section {
+        margin-top: 2rem;
+    }
+
+    .topics-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+
+    .topic-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .topic-item {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s;
+        display: block;
+        border-left: 5px solid transparent;
+    }
+
+    .topic-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        border-left-color: #6366f1;
+    }
+
+    .topic-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .topic-item-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .topic-item-badge {
+        background: #10b981;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .topic-item-desc {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .topic-item-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .topic-item-meta i {
+        margin-right: 0.3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">👨‍🎓 Оқушы панелі</h1>
+            <p class="dashboard-subtitle">Қош келдіңіз, {{ student.full_name }}!</p>
+        </div>
+        <a href="/logout" class="btn btn-outline">Шығу</a>
+    </div>
+
+    <!-- Сертификат баннері -->
+    {% if progress >= 80 %}
+    <div class="certificate-banner">
+        <div class="certificate-text">
+            <i class="fas fa-trophy"></i> Құттықтаймыз! Сіз сертификат ала аласыз!
+        </div>
+        <a href="/certificate" class="btn" style="background: white; color: #6366f1;">
+            <i class="fas fa-certificate"></i> Сертификатты қарау
+        </a>
+    </div>
+    {% else %}
+    <div class="certificate-banner locked">
+        <div class="certificate-text">
+            <i class="fas fa-lock"></i> Сертификат алу үшін {{ (80 - progress)|round }}% прогресс керек
+        </div>
+        <span style="opacity: 0.7;">{{ progress|round }}% / 80%</span>
+    </div>
+    {% endif %}
+
+    <div class="user-stats">
+        <div class="user-stat-card">
+            <div class="user-stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="user-stat-info">
+                <h3>{{ student.xp }}</h3>
+                <p>XP ұпай</p>
+            </div>
+        </div>
+        <div class="user-stat-card">
+            <div class="user-stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div class="user-stat-info">
+                <h3>{{ student.level }}</h3>
+                <p>Деңгей</p>
+            </div>
+        </div>
+        <div class="user-stat-card">
+            <div class="user-stat-icon" style="background: linear-gradient(135deg, #f472b6, #fbbf24); color: white;">
+                <i class="fas fa-medal"></i>
+            </div>
+            <div class="user-stat-info">
+                <h3>{{ badges|length }}</h3>
+                <p>Бейдждер</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-card">
+        <div class="progress-header">
+            <span class="progress-title">📊 Жалпы прогресс</span>
+            <span class="progress-percent">{{ progress|round }}%</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" style="width: {{ progress }}%"></div>
+        </div>
+        <p style="margin-top: 1rem; color: #64748b;">Барлық тапсырмаларды орындап, 3D шеберіне айналыңыз!</p>
+    </div>
+
+    <div class="badges-section">
+        <h2 style="font-size: 1.5rem; font-weight: 700;">🏆 Менің бейдждерім</h2>
+        {% if badges %}
+        <div class="badges-grid">
+            {% for badge in badges %}
+            <div class="badge-item">
+                <i class="fas fa-{{ badge.badge_icon }}"></i>
+                {{ badge.badge_name }}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #64748b; margin-top: 1rem;">Әлі бейдж жоқ. Тапсырмаларды орындап, бейдждер жинаңыз!</p>
+        {% endif %}
+    </div>
+
+    <div class="leaderboard-card">
+        <h2 class="leaderboard-title">
+            <i class="fas fa-crown" style="color: #FFD700;"></i>
+            Leaderboard - Топ 10
+        </h2>
+        {% for user in leaderboard %}
+        <div class="leaderboard-item">
+            <div class="leaderboard-rank rank-{{ loop.index if loop.index <= 3 else 'other' }}">
+                {{ loop.index }}
+            </div>
+            <div class="leaderboard-info">
+                <div class="leaderboard-name">{{ user.full_name }}</div>
+                <div class="leaderboard-class">{{ user.class_name }}</div>
+            </div>
+            <div class="leaderboard-xp">{{ user.xp }} XP</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="topics-section">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <a href="/practice" class="card" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:1.5rem; padding:1.5rem;">
+            <div style="width:60px; height:60px; border-radius:15px; background:linear-gradient(135deg, #6366f1, #8b5cf6); display:flex; align-items:center; justify-content:center; color:white; font-size:1.5rem;">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div>
+                <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.3rem;">Интерактивті тапсырмалар</h3>
+                <p style="color:#64748b; font-size:0.9rem;">Барлық тақырыптар бойынша 35 тапсырма</p>
+            </div>
+        </a>
+        <a href="/my_grades" class="card" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:1.5rem; padding:1.5rem;">
+            <div style="width:60px; height:60px; border-radius:15px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; color:white; font-size:1.5rem;">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div>
+                <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.3rem;">Бағаларым</h3>
+                <p style="color:#64748b; font-size:0.9rem;">Интерактивті тапсырмалар және жобалар</p>
+            </div>
+        </a>
+    </div>
+
+    <h2 class="topics-title">📚 Оқу тақырыптары</h2>
+        <div class="topic-list">
+            {% for topic in topics %}
+            <a href="/topic/{{ topic.id }}" class="topic-item">
+                <div class="topic-item-header">
+                    <span class="topic-item-title">{{ topic.title }}</span>
+                    <span class="topic-item-badge">§{{ loop.index }}</span>
+                </div>
+                <p class="topic-item-desc">{{ topic.description }}</p>
+                <div class="topic-item-meta">
+                    <span><i class="fas fa-tasks"></i> 5 тапсырма</span>
+                    <span><i class="fas fa-video"></i> Видео</span>
+                    <span><i class="fas fa-code"></i> Код</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

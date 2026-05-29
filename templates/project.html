@@ -1,0 +1,803 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .project-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .project-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+    .project-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.8; }
+    .back-btn:hover { opacity: 1; }
+
+    .project-num-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background: white;
+        color: #6366f1;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+
+    /* ===== ПРАКТИКАЛЫҚ ЖОБА (НҰСҚАУЛЫҚ) ===== */
+    .guide-section {
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .guide-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .step-item {
+        background: white;
+        border-radius: 15px 15px 0 0;
+        padding: 1.5rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+        border-left: 4px solid #6366f1;
+        margin-bottom: 0;
+    }
+    .step-num {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .step-content { flex: 1; }
+    .step-content p { color: #444; line-height: 1.6; }
+    .step-image-below {
+        background: white;
+        border-radius: 0 0 15px 15px;
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+        border-left: 4px solid #6366f1;
+        border-top: 1px solid #f1f5f9;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        position: relative;
+    }
+    .step-image-below img {
+        width: 100%;
+        max-height: 350px;
+        object-fit: contain;
+        border-radius: 8px;
+        display: block;
+        margin: 0 auto;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+    }
+    .step-image-below img:hover {
+        transform: scale(1.02);
+    }
+    .zoom-hint {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .step-image-below:hover .zoom-hint {
+        opacity: 1;
+    }
+
+    /* Lightbox */
+    .lightbox {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        animation: fadeIn 0.3s;
+    }
+    .lightbox.active {
+        display: flex;
+    }
+    .lightbox img {
+        max-width: 90%;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .lightbox-close {
+        position: absolute;
+        top: 20px; right: 30px;
+        color: white;
+        font-size: 2.5rem;
+        cursor: pointer;
+        transition: color 0.3s;
+        z-index: 10000;
+    }
+    .lightbox-close:hover {
+        color: #f59e0b;
+    }
+    .lightbox-caption {
+        color: white;
+        margin-top: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+
+    /* ===== ҮЙ ТАПСЫРМАСЫ + КРИТЕРИЙЛЕР (2 БАҒАН) ===== */
+    .homework-criteria-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    @media (max-width: 768px) {
+        .homework-criteria-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Сол жақ - Үй тапсырмасы */
+    .homework-section {
+        background: linear-gradient(135deg, #fefce8, #fef9c3);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 2px solid #eab308;
+    }
+    .homework-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #eab308;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .homework-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #854d0e;
+        margin-bottom: 0.5rem;
+    }
+    .homework-desc {
+        color: #a16207;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .homework-tasks {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+    .homework-task-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 0.8rem 1rem;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 10px;
+        border-left: 3px solid #eab308;
+        font-size: 0.95rem;
+        color: #854d0e;
+        line-height: 1.5;
+        transition: all 0.3s;
+    }
+    .homework-task-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateX(3px);
+    }
+    .task-num {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        border-radius: 50%;
+        background: #eab308;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    .homework-image-wrapper {
+        margin-top: 1rem;
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fefce8;
+        border: 2px solid #fde047;
+    }
+    .homework-image {
+        width: 100%;
+        max-height: 300px;
+        object-fit: contain;
+        display: block;
+        border-radius: 10px;
+        cursor: zoom-in;
+        transition: transform 0.3s ease;
+    }
+    .homework-image:hover {
+        transform: scale(1.02);
+    }
+    .homework-image-wrapper .zoom-hint {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #a16207;
+        padding: 0.5rem;
+        background: rgba(254, 252, 232, 0.9);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .homework-image-wrapper:hover .zoom-hint {
+        opacity: 1;
+    }
+
+    /* Оң жақ - Бағалау критерийлері */
+    .criteria-section {
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 2rem;
+        border: 2px solid #e2e8f0;
+    }
+    .criteria-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .criteria-list { list-style: none; }
+    .criteria-list li {
+        padding: 0.8rem;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+    .criteria-list li i { color: #10b981; }
+
+    /* ===== ЖҮКТЕУ ===== */
+    .upload-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 2px solid #e2e8f0;
+    }
+    .upload-section h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #0f172a;
+    }
+
+    /* === 3 ФОРМАТ БОЙЫНША ЖҮКТЕУ === */
+    .upload-formats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.2rem;
+        margin-top: 1rem;
+    }
+
+    .format-upload-card {
+        background: #fff;
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .format-upload-card:hover {
+        border-color: #6366f1;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+    }
+    .format-upload-card.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+        border-color: #cbd5e1;
+    }
+    .format-upload-card.disabled .upload-area-small {
+        display: none;
+    }
+
+    .format-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .format-name {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.3rem;
+    }
+    .format-count {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 0.8rem;
+    }
+
+    .upload-area-small {
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .upload-area-small:hover {
+        border-color: #6366f1;
+        background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    }
+    .upload-area-small i {
+        font-size: 1.2rem;
+        color: #6366f1;
+    }
+    .upload-area-small span {
+        font-size: 0.8rem;
+        color: #475569;
+        font-weight: 500;
+    }
+
+    .format-files {
+        margin-top: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .file-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.8rem;
+    }
+    .file-item-name {
+        color: #334155;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 120px;
+    }
+    .file-item-remove {
+        color: #ef4444;
+        cursor: pointer;
+        padding: 0.2rem;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+    .file-item-remove:hover {
+        background: #fee2e2;
+    }
+
+    .submit-all-btn {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff;
+        border: none;
+        padding: 0.9rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    .submit-all-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .uploaded-file {
+        background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+        border-radius: 15px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        text-align: left;
+    }
+    .uploaded-file i { font-size: 2rem; color: #10b981; }
+    .uploaded-file-info { flex: 1; }
+    .uploaded-file-name { font-weight: 700; }
+    .uploaded-file-status { color: #64748b; font-size: 0.9rem; }
+
+    .grade-display {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .result-message { padding: 1.2rem; border-radius: 15px; margin-top: 1rem; font-weight: 600; display: none; }
+    .result-success { background: #d1fae5; color: #065f46; }
+    .result-error { background: #fee2e2; color: #991b1b; }
+
+    .next-btn { margin-top: 2rem; padding: 1rem 2rem; font-size: 1.1rem; }
+
+    @media (max-width: 768px) {
+        .upload-formats { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="project-container">
+    <div class="project-header">
+        <a href="/topic/{{ topic.id }}" class="back-btn"><i class="fas fa-arrow-left"></i> {{ topic.title }}</a>
+        <div class="project-num-badge">{{ project.project_num }}</div>
+        <h1>{{ project.title }}</h1>
+    </div>
+
+    <!-- ===== ПРАКТИКАЛЫҚ ЖОБА (НҰСҚАУЛЫҚ) ===== -->
+    <div class="guide-section">
+        <h2 class="guide-title"><i class="fas fa-book-open" style="color: #6366f1;"></i> Практикалық жоба нұсқаулығы</h2>
+
+        {% for step in project.steps.split('|') %}
+        <div class="step-item">
+            <div class="step-num">{{ loop.index }}</div>
+            <div class="step-content">
+                <p>{{ step }}</p>
+            </div>
+        </div>
+        <div class="step-image-below">
+            <img src="/static/pr{{ project.project_num }}/p{{ project.project_num }}.{{ loop.index }}.png"
+                alt="Қадам {{ loop.index }}"
+                class="zoomable-image"
+                onclick="openLightbox(this.src, '{{ loop.index }}')"
+                onerror="this.style.display='none'; this.parentElement.style.display='none'">
+            <div class="zoom-hint"><i class="fas fa-search-plus"></i> Үлкейту үшін басыңыз</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ===== ҮЙ ТАПСЫРМАСЫ (СОЛ) + КРИТЕРИЙЛЕР (ОҢ) ===== -->
+    <div class="homework-criteria-grid">
+        <!-- Сол жақ - Үй тапсырмасы -->
+        <div class="homework-section">
+            <div class="homework-badge"><i class="fas fa-home"></i> Өзіндік жұмыс</div>
+            <h2 class="homework-title">{{ project.homework_title }}</h2>
+
+            {% if project.project_num == 1 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Компьютер мониторын модельде</div>
+                <div class="homework-task-item"><span class="task-num">2</span> Пернетақта немесе тінтуірді жасаңыз</div>
+            </div>
+            {% elif project.project_num == 2 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Ойын джойстигін модельде</div>
+            </div>
+            {% elif project.project_num == 3 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Қарапайым ұшатын дронның корпусын модельде</div>
+            </div>
+            {% elif project.project_num == 4 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Машина моделін жасаңыз</div>
+            </div>
+            {% elif project.project_num == 5 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Өткен сабақта жасалған джойстикке материалдар мен текстуралар бер</div>
+            </div>
+            {% elif project.project_num == 6 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Компьютер үстелінің көрінісін жарықтандыр</div>
+            </div>
+            {% elif project.project_num == 7 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Компьютер жиынтығының реалистік суретін жаса</div>
+            </div>
+            {% elif project.project_num == 8 %}
+            <div class="homework-tasks">
+                <div class="homework-task-item"><span class="task-num">1</span> Дронның қысқа ұшу анимациясын жаса</div>
+            </div>
+            {% else %}
+            <p class="homework-desc">Жоғарыдағы нұсқаулықты пайдаланып, осы тапсырманы орындаңыз. Нәтижені .blend, .pdf немесе .pptx форматында жүктеңіз.</p>
+            {% endif %}
+
+            <div class="homework-image-wrapper">
+                <img src="/static/pr{{ project.project_num }}/homework.png"
+                     alt="Үй тапсырмасы мысалы"
+                     class="homework-image zoomable-image"
+                     onclick="openLightbox(this.src, 'Үй тапсырмасы')"
+                     onerror="this.style.display='none'; this.parentElement.style.display='none'">
+                <div class="zoom-hint"><i class="fas fa-search-plus"></i> Үлкейту үшін басыңыз</div>
+            </div>
+        </div>
+
+        <!-- Оң жақ - Бағалау критерийлері -->
+        <div class="criteria-section">
+            <h2 class="criteria-title"><i class="fas fa-clipboard-check" style="color: #6366f1;"></i> Бағалау критерийлері (10 балдық жүйе)</h2>
+            <ul class="criteria-list">
+                {% for criterion in project.criteria.split('|') %}
+                <li><i class="fas fa-check-circle"></i> {{ criterion }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== ЖҮКТЕУ ===== -->
+    <div class="upload-section">
+        <h2><i class="fas fa-upload" style="color: #6366f1;"></i> Жұмысты жүктеу</h2>
+
+        {% if submission %}
+            {% if submission.status == 'graded' %}
+            <div class="uploaded-file">
+                <i class="fas fa-file-alt"></i>
+                <div class="uploaded-file-info">
+                    <div class="uploaded-file-name">{{ submission.filename }}</div>
+                    <div class="uploaded-file-status">Бағаланды: {{ submission.graded_at }}</div>
+                </div>
+                <div class="grade-display">
+                    <i class="fas fa-star"></i> {{ submission.teacher_score }}/10
+                </div>
+            </div>
+            {% if submission.teacher_comment %}
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 10px; margin-top: 1rem;">
+                <strong><i class="fas fa-comment"></i> Мұғалім пікірі:</strong>
+                <p style="margin-top: 0.5rem;">{{ submission.teacher_comment }}</p>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="uploaded-file">
+                <i class="fas fa-clock"></i>
+                <div class="uploaded-file-info">
+                    <div class="uploaded-file-name">{{ submission.filename }}</div>
+                    <div class="uploaded-file-status">Тексеруде күтуде...</div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+
+        <!-- === 3 ФОРМАТ БОЙЫНША ЖҮКТЕУ === -->
+        <div class="upload-formats">
+
+            <!-- BLEND -->
+            <div class="format-upload-card" id="blendCard">
+                <div class="format-icon"><i class="fas fa-cube" style="color: #f97316;"></i></div>
+                <div class="format-name">.blend файлы</div>
+                <div class="format-count">
+                    <span id="blendCount">0</span> / 3 жүктелді
+                </div>
+                <div class="upload-area-small" id="blendArea" onclick="document.getElementById('blendInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Жүктеу</span>
+                </div>
+                <input type="file" id="blendInput" accept=".blend" style="display: none;" onchange="handleFormatUpload({{ project.id }}, 'blend', this)">
+                <div class="format-files" id="blendFiles"></div>
+            </div>
+
+            <!-- PDF -->
+            <div class="format-upload-card" id="pdfCard">
+                <div class="format-icon"><i class="fas fa-file-pdf" style="color: #ef4444;"></i></div>
+                <div class="format-name">.pdf файлы</div>
+                <div class="format-count">
+                    <span id="pdfCount">0</span> / 3 жүктелді
+                </div>
+                <div class="upload-area-small" id="pdfArea" onclick="document.getElementById('pdfInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Жүктеу</span>
+                </div>
+                <input type="file" id="pdfInput" accept=".pdf" style="display: none;" onchange="handleFormatUpload({{ project.id }}, 'pdf', this)">
+                <div class="format-files" id="pdfFiles"></div>
+            </div>
+
+            <!-- PPTX -->
+            <div class="format-upload-card" id="pptxCard">
+                <div class="format-icon"><i class="fas fa-file-powerpoint" style="color: #8b5cf6;"></i></div>
+                <div class="format-name">.pptx файлы</div>
+                <div class="format-count">
+                    <span id="pptxCount">0</span> / 3 жүктелді
+                </div>
+                <div class="upload-area-small" id="pptxArea" onclick="document.getElementById('pptxInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Жүктеу</span>
+                </div>
+                <input type="file" id="pptxInput" accept=".pptx" style="display: none;" onchange="handleFormatUpload({{ project.id }}, 'pptx', this)">
+                <div class="format-files" id="pptxFiles"></div>
+            </div>
+
+        </div>
+
+        <!-- Барлығын жіберу батырмасы -->
+        <div id="submitAllArea" style="display: none; margin-top: 1.5rem; text-align: center;">
+            <button class="submit-all-btn" onclick="submitAllFiles({{ project.id }})">
+                <i class="fas fa-paper-plane"></i> Барлық файлдарды жіберу
+            </button>
+        </div>
+
+        <div class="result-message" id="uploadResult"></div>
+        {% endif %}
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+        <img id="lightbox-img" src="" alt="Үлкейтілген сурет">
+        <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="/topic/{{ topic.id }}" class="btn btn-primary next-btn">
+            <i class="fas fa-arrow-left"></i> Тақырыпқа оралу
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== LIGHTBOX =====
+    function openLightbox(src, stepNum) {
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox-caption').textContent = 'Қадам ' + stepNum;
+        document.getElementById('lightbox').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox(e) {
+        if (e) e.stopPropagation();
+        document.getElementById('lightbox').classList.remove('active');
+        document.getElementById('lightbox-img').src = '';
+        document.body.style.overflow = 'auto';
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+    // ===== 3 ФОРМАТ БОЙЫНША ЖҮКТЕУ =====
+    const uploadedFiles = { blend: [], pdf: [], pptx: [] };
+    const maxFilesPerFormat = 3;
+
+    function handleFormatUpload(projectId, format, input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const expectedExt = '.' + format;
+        if (!file.name.toLowerCase().endsWith(expectedExt)) {
+            showUploadResult('Қате формат! Тек ' + expectedExt + ' файлы қабылданады.', 'error');
+            input.value = '';
+            return;
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+            showUploadResult('Файл өлшемі 50MB-тан аспауы керек!', 'error');
+            input.value = '';
+            return;
+        }
+
+        if (uploadedFiles[format].length >= maxFilesPerFormat) {
+            showUploadResult(format.toUpperCase() + ' форматынан 3-тен аспауы керек!', 'error');
+            input.value = '';
+            return;
+        }
+
+        const fileObj = { name: file.name, size: file.size, file: file };
+        uploadedFiles[format].push(fileObj);
+
+        updateFormatUI(format);
+        updateSubmitButton();
+        showUploadResult(file.name + ' сәтті қосылды!', 'success');
+        input.value = '';
+    }
+
+    function updateFormatUI(format) {
+        const countEl = document.getElementById(format + 'Count');
+        const filesEl = document.getElementById(format + 'Files');
+        const cardEl = document.getElementById(format + 'Card');
+        const areaEl = document.getElementById(format + 'Area');
+
+        countEl.textContent = uploadedFiles[format].length;
+        filesEl.innerHTML = '';
+
+        uploadedFiles[format].forEach((f, index) => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <span class="file-item-name" title="${f.name}">${f.name}</span>
+                <i class="fas fa-times file-item-remove" onclick="removeFile('${format}', ${index})"></i>
+            `;
+            filesEl.appendChild(item);
+        });
+
+        if (uploadedFiles[format].length >= maxFilesPerFormat) {
+            areaEl.style.display = 'none';
+            cardEl.classList.add('disabled');
+        }
+    }
+
+    function removeFile(format, index) {
+        uploadedFiles[format].splice(index, 1);
+        updateFormatUI(format);
+        updateSubmitButton();
+    }
+
+    function updateSubmitButton() {
+        const totalFiles = uploadedFiles.blend.length + uploadedFiles.pdf.length + uploadedFiles.pptx.length;
+        document.getElementById('submitAllArea').style.display = totalFiles > 0 ? 'block' : 'none';
+    }
+
+    function submitAllFiles(projectId) {
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+
+        ['blend', 'pdf', 'pptx'].forEach(format => {
+            uploadedFiles[format].forEach((f, index) => {
+                formData.append(format + '_files[]', f.file);
+            });
+        });
+
+        fetch('/api/upload_project/' + projectId, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showUploadResult('Барлық файлдар сәтті жүктелді!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showUploadResult('Қате: ' + (data.error || 'Белгісіз қате'), 'error');
+            }
+        })
+        .catch(err => {
+            showUploadResult('Жүктеу қатесі: ' + err.message, 'error');
+        });
+    }
+
+    function showUploadResult(message, type) {
+        const resultEl = document.getElementById('uploadResult');
+        resultEl.textContent = message;
+        resultEl.className = 'result-message result-' + type;
+        resultEl.style.display = 'block';
+        setTimeout(() => { resultEl.style.display = 'none'; }, 4000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,1914 @@
+{% extends "base.html" %}
+
+{% block title %}Интерактивті тапсырмалар — Blender{% endblock %}
+
+{% block extra_css %}
+<style>
+    .practice-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .practice-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2.5rem 2rem;
+        border-radius: 25px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .practice-header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .practice-header p { font-size: 1.1rem; opacity: 0.9; }
+
+    .topic-filter {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .topic-filter-btn {
+        padding: 0.8rem 1.5rem;
+        border-radius: 50px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        color: #475569;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: 'Nunito', sans-serif;
+    }
+    .topic-filter-btn:hover, .topic-filter-btn.active {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 5px 15px rgba(99,102,241,0.3);
+    }
+
+    .topic-section {
+        margin-bottom: 3rem;
+        animation: fadeIn 0.6s ease forwards;
+    }
+    .topic-section-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 1.5rem;
+        padding-left: 1rem;
+        border-left: 5px solid #6366f1;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    .topic-section-title i { color: #6366f1; }
+
+    .task-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+    .task-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+    .task-card.completed {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    }
+    .task-card.completed::after {
+        content: '✓';
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        width: 35px;
+        height: 35px;
+        background: #10b981;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.2rem;
+    }
+
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .task-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border-radius: 50%;
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-right: 0.5rem;
+    }
+    .task-type-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge-mc { background: #e0e7ff; color: #4f46e5; }
+    .badge-fill { background: #f3e8ff; color: #7c3aed; }
+    .badge-match { background: #f0fdf4; color: #059669; }
+    .badge-order { background: #fef3c7; color: #d97706; }
+    .badge-memory { background: #fce7f3; color: #db2777; }
+    .badge-tf { background: #e0f2fe; color: #0369a1; }
+    .task-points {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .task-question {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #0f172a;
+        line-height: 1.6;
+    }
+
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    .option-item {
+        padding: 1.2rem 1.5rem;
+        background: #f8fafc;
+        border: 2px solid transparent;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 1.05rem;
+    }
+    .option-item:hover {
+        border-color: #6366f1;
+        background: #eef2ff;
+        transform: translateX(5px);
+    }
+    .option-item.selected {
+        border-color: #6366f1;
+        background: #e0e7ff;
+    }
+    .option-item.correct {
+        border-color: #10b981;
+        background: #d1fae5;
+    }
+    .option-item.wrong {
+        border-color: #ef4444;
+        background: #fee2e2;
+    }
+    .option-radio {
+        width: 26px;
+        height: 26px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.3s;
+    }
+    .option-item.selected .option-radio {
+        border-color: #6366f1;
+        background: #6366f1;
+    }
+    .option-item.correct .option-radio {
+        border-color: #10b981;
+        background: #10b981;
+    }
+    .option-item.wrong .option-radio {
+        border-color: #ef4444;
+        background: #ef4444;
+    }
+    .option-radio i {
+        color: white;
+        font-size: 0.8rem;
+        display: none;
+    }
+    .option-item.selected .option-radio i,
+    .option-item.correct .option-radio i,
+    .option-item.wrong .option-radio i { display: block; }
+
+    .fill-input {
+        width: 100%;
+        padding: 1.2rem 1.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        font-size: 1.1rem;
+        font-family: 'Nunito', sans-serif;
+        transition: all 0.3s;
+    }
+    .fill-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+    }
+    .fill-input.correct {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+    .fill-input.wrong {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
+    .matching-wrapper { margin-bottom: 1rem; }
+    .matching-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    @media (max-width: 600px) {
+        .matching-columns { grid-template-columns: 1fr; }
+    }
+    .matching-column-title {
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        display: inline-block;
+    }
+    .keys-title { background: #e0e7ff; color: #4f46e5; }
+    .values-title { background: #f0fdf4; color: #059669; }
+    .matching-item {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+        font-size: 1rem;
+    }
+    .matching-item:hover {
+        border-color: #6366f1;
+        background: #eef2ff;
+        transform: scale(1.02);
+    }
+    .matching-item.selected-key {
+        border-color: #4f46e5;
+        background: #e0e7ff;
+        box-shadow: 0 0 0 4px rgba(79,70,229,0.2);
+    }
+    .matching-item.selected-value {
+        border-color: #7c3aed;
+        background: #f3e8ff;
+        box-shadow: 0 0 0 4px rgba(124,58,237,0.2);
+    }
+    .matching-item.matched {
+        border-color: #10b981;
+        background: #d1fae5;
+        opacity: 0.7;
+        cursor: default;
+    }
+    .matching-item.matched::after {
+        content: ' ✓';
+        color: #10b981;
+        font-weight: 800;
+    }
+    .matching-item.wrong {
+        border-color: #ef4444;
+        background: #fee2e2;
+        animation: shake 0.5s;
+    }
+    .matching-item.disabled {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    .sort-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .sort-item {
+        background: #f0f4ff;
+        border: 2px solid #6366f1;
+        border-radius: 12px;
+        padding: 15px;
+        cursor: move;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s;
+        font-weight: 600;
+    }
+    .sort-item:hover {
+        transform: translateX(10px);
+        box-shadow: 0 5px 15px rgba(99,102,241,0.2);
+    }
+    .sort-number {
+        background: #6366f1;
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 35px;
+        margin-right: 15px;
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+    .sort-item.dragging {
+        opacity: 0.5;
+    }
+    .sort-item.correct {
+        background: #d1fae5;
+        border-color: #10b981;
+    }
+    .sort-item.wrong {
+        background: #fee2e2;
+        border-color: #ef4444;
+    }
+
+    .memory-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+    @media (max-width: 600px) {
+        .memory-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .memory-card {
+        aspect-ratio: 1;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1.2em;
+        color: white;
+        font-weight: bold;
+        border: 3px solid transparent;
+    }
+    .memory-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 20px rgba(99,102,241,0.4);
+    }
+    .memory-card.flipped {
+        background: white;
+        color: #0f172a;
+        border: 3px solid #6366f1;
+        font-size: 1rem;
+    }
+    .memory-card.matched {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+        animation: pulse 0.5s;
+        cursor: default;
+    }
+    .memory-card .card-icon {
+        font-size: 2rem;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+
+    .submit-btn {
+        margin-top: 1.5rem;
+        width: 100%;
+        justify-content: center;
+        padding: 1rem;
+        font-size: 1.1rem;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+        font-family: 'Nunito', sans-serif;
+        transition: all 0.3s;
+    }
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(99,102,241,0.4);
+    }
+    .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .result-message {
+        padding: 1.2rem;
+        border-radius: 15px;
+        margin-top: 1rem;
+        font-weight: 600;
+        text-align: center;
+        display: none;
+        font-size: 1.05rem;
+    }
+    .result-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 2px solid #a7f3d0;
+    }
+    .result-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #fecaca;
+    }
+    .result-info {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 2px solid #bfdbfe;
+    }
+
+    .completed-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .hint-box {
+        background: #ffedd5;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem 1.5rem;
+        border-radius: 0 15px 15px 0;
+        margin-bottom: 1.5rem;
+        color: #92400e;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .hint-box i { color: #f59e0b; }
+
+    .stats-bar {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .stat-item-practice {
+        text-align: center;
+    }
+    .stat-item-practice .value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #6366f1;
+    }
+    .stat-item-practice .label {
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .tf-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        border: 2px solid transparent;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-right: 1rem;
+        font-family: 'Nunito', sans-serif;
+    }
+    .tf-btn-true {
+        background: #d1fae5;
+        color: #065f46;
+        border-color: #a7f3d0;
+    }
+    .tf-btn-true:hover, .tf-btn-true.selected {
+        background: #10b981;
+        color: white;
+        transform: scale(1.05);
+    }
+    .tf-btn-false {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+    .tf-btn-false:hover, .tf-btn-false.selected {
+        background: #ef4444;
+        color: white;
+        transform: scale(1.05);
+    }
+    .tf-btn i { font-size: 1.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="practice-container">
+    <div class="practice-header">
+        <h1><i class="fas fa-cube"></i> Blender интерактивті тапсырмалары</h1>
+        <p>42 тапсырманы орындап, Blender негіздерін меңгеріңіз! XP жинаңыз!</p>
+    </div>
+
+    <div class="progress-bar" style="background: #e2e8f0; border-radius: 10px; height: 20px; margin-bottom: 30px; overflow: hidden;">
+        <div class="progress-fill" id="progressBar" style="background: linear-gradient(90deg, #6366f1, #8b5cf6); height: 100%; border-radius: 10px; transition: width 0.5s; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: white; font-size: 0.9em; font-weight: bold; width: 0%">0%</div>
+    </div>
+
+    <div class="topic-filter">
+        <button class="topic-filter-btn active" onclick="filterTasks('all')">Барлығы</button>
+        <button class="topic-filter-btn" onclick="filterTasks('matching')">Сәйкестендіру</button>
+        <button class="topic-filter-btn" onclick="filterTasks('fill')">Бос орын</button>
+        <button class="topic-filter-btn" onclick="filterTasks('quiz')">Тест</button>
+        <button class="topic-filter-btn" onclick="filterTasks('order')">Ретпен орналастыру</button>
+        <button class="topic-filter-btn" onclick="filterTasks('memory')">Memory</button>
+        <button class="topic-filter-btn" onclick="filterTasks('truefalse')">Ақиқат/Жалған</button>
+    </div>
+
+    <!-- 1. СӘЙКЕСТЕНДІРУ (7 тапсырма) -->
+    <div class="topic-section" data-type="matching">
+        <h2 class="topic-section-title">
+            <i class="fas fa-link"></i>
+            Сәйкестендіру
+            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-left: auto;">7 тапсырма</span>
+        </h2>
+
+        <!-- Тапсырма 1 -->
+        <div class="task-card" id="task-1" data-task-id="1">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">1</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Тор элементтерін атауларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-1">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Термин</div>
+                        <div class="matching-item" data-key="Vertex" data-correct="Нүкте" onclick="selectMatchKey(1, 'Vertex', 'Нүкте', this)"><strong>Vertex</strong></div>
+                        <div class="matching-item" data-key="Edge" data-correct="Сызық" onclick="selectMatchKey(1, 'Edge', 'Сызық', this)"><strong>Edge</strong></div>
+                        <div class="matching-item" data-key="Face" data-correct="Бет" onclick="selectMatchKey(1, 'Face', 'Бет', this)"><strong>Face</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Анықтама</div>
+                        <div class="matching-item" data-value="Бет" onclick="selectMatchValue(1, 'Бет', this)">Бет</div>
+                        <div class="matching-item" data-value="Сызық" onclick="selectMatchValue(1, 'Сызық', this)">Сызық</div>
+                        <div class="matching-item" data-value="Нүкте" onclick="selectMatchValue(1, 'Нүкте', this)">Нүкте</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-1" onclick="submitTask(1, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-1"></div>
+        </div>
+
+        <!-- Тапсырма 2 -->
+        <div class="task-card" id="task-2" data-task-id="2">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">2</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Blender терезелерін атауларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-2">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Термин</div>
+                        <div class="matching-item" data-key="Viewport" data-correct="3D көрініс" onclick="selectMatchKey(2, 'Viewport', '3D көрініс', this)"><strong>Viewport</strong></div>
+                        <div class="matching-item" data-key="Outliner" data-correct="Тізім" onclick="selectMatchKey(2, 'Outliner', 'Тізім', this)"><strong>Outliner</strong></div>
+                        <div class="matching-item" data-key="Properties" data-correct="Қасиет" onclick="selectMatchKey(2, 'Properties', 'Қасиет', this)"><strong>Properties</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Анықтама</div>
+                        <div class="matching-item" data-value="Қасиет" onclick="selectMatchValue(2, 'Қасиет', this)">Қасиет</div>
+                        <div class="matching-item" data-value="3D көрініс" onclick="selectMatchValue(2, '3D көрініс', this)">3D көрініс</div>
+                        <div class="matching-item" data-value="Тізім" onclick="selectMatchValue(2, 'Тізім', this)">Тізім</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-2" onclick="submitTask(2, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-2"></div>
+        </div>
+
+        <!-- Тапсырма 3 -->
+        <div class="task-card" id="task-3" data-task-id="3">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">3</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Амалдарды сипаттамаларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-3">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Амал</div>
+                        <div class="matching-item" data-key="Extrude" data-correct="Жаңа геометрия" onclick="selectMatchKey(3, 'Extrude', 'Жаңа геометрия', this)"><strong>Extrude</strong></div>
+                        <div class="matching-item" data-key="Scale" data-correct="Өлшем" onclick="selectMatchKey(3, 'Scale', 'Өлшем', this)"><strong>Scale</strong></div>
+                        <div class="matching-item" data-key="Rotate" data-correct="Бұру" onclick="selectMatchKey(3, 'Rotate', 'Бұру', this)"><strong>Rotate</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Сипаттама</div>
+                        <div class="matching-item" data-value="Бұру" onclick="selectMatchValue(3, 'Бұру', this)">Бұру</div>
+                        <div class="matching-item" data-value="Өлшем" onclick="selectMatchValue(3, 'Өлшем', this)">Өлшем</div>
+                        <div class="matching-item" data-value="Жаңа геометрия" onclick="selectMatchValue(3, 'Жаңа геометрия', this)">Жаңа геометрия</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-3" onclick="submitTask(3, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-3"></div>
+        </div>
+
+        <!-- Тапсырма 4 -->
+        <div class="task-card" id="task-4" data-task-id="4">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">4</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Материал параметрлерін сипаттамаларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-4">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Параметр</div>
+                        <div class="matching-item" data-key="Metallic" data-correct="Металл" onclick="selectMatchKey(4, 'Metallic', 'Металл', this)"><strong>Metallic</strong></div>
+                        <div class="matching-item" data-key="Roughness" data-correct="Жылтырлық" onclick="selectMatchKey(4, 'Roughness', 'Жылтырлық', this)"><strong>Roughness</strong></div>
+                        <div class="matching-item" data-key="Emission" data-correct="Жарық" onclick="selectMatchKey(4, 'Emission', 'Жарық', this)"><strong>Emission</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Сипаттама</div>
+                        <div class="matching-item" data-value="Жарық" onclick="selectMatchValue(4, 'Жарық', this)">Жарық</div>
+                        <div class="matching-item" data-value="Жылтырлық" onclick="selectMatchValue(4, 'Жылтырлық', this)">Жылтырлық</div>
+                        <div class="matching-item" data-value="Металл" onclick="selectMatchValue(4, 'Металл', this)">Металл</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-4" onclick="submitTask(4, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-4"></div>
+        </div>
+
+        <!-- Тапсырма 5 -->
+        <div class="task-card" id="task-5" data-task-id="5">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">5</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Жарық көздерін сипаттамаларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-5">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Жарық</div>
+                        <div class="matching-item" data-key="Point" data-correct="Барлық бағыт" onclick="selectMatchKey(5, 'Point', 'Барлық бағыт', this)"><strong>Point</strong></div>
+                        <div class="matching-item" data-key="Sun" data-correct="Бір бағыт" onclick="selectMatchKey(5, 'Sun', 'Бір бағыт', this)"><strong>Sun</strong></div>
+                        <div class="matching-item" data-key="Area" data-correct="Жұмсақ жарық" onclick="selectMatchKey(5, 'Area', 'Жұмсақ жарық', this)"><strong>Area</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Сипаттама</div>
+                        <div class="matching-item" data-value="Бір бағыт" onclick="selectMatchValue(5, 'Бір бағыт', this)">Бір бағыт</div>
+                        <div class="matching-item" data-value="Жұмсақ жарық" onclick="selectMatchValue(5, 'Жұмсақ жарық', this)">Жұмсақ жарық</div>
+                        <div class="matching-item" data-value="Барлық бағыт" onclick="selectMatchValue(5, 'Барлық бағыт', this)">Барлық бағыт</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-5" onclick="submitTask(5, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-5"></div>
+        </div>
+
+        <!-- Тапсырма 6 -->
+        <div class="task-card" id="task-6" data-task-id="6">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">6</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Рендерлеу терминдерін сипаттамаларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-6">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Термин</div>
+                        <div class="matching-item" data-key="Render" data-correct="Сурет шығару" onclick="selectMatchKey(6, 'Render', 'Сурет шығару', this)"><strong>Render</strong></div>
+                        <div class="matching-item" data-key="Cycles" data-correct="Физикалық" onclick="selectMatchKey(6, 'Cycles', 'Физикалық', this)"><strong>Cycles</strong></div>
+                        <div class="matching-item" data-key="Eevee" data-correct="Жылдам" onclick="selectMatchKey(6, 'Eevee', 'Жылдам', this)"><strong>Eevee</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Сипаттама</div>
+                        <div class="matching-item" data-value="Жылдам" onclick="selectMatchValue(6, 'Жылдам', this)">Жылдам</div>
+                        <div class="matching-item" data-value="Физикалық" onclick="selectMatchValue(6, 'Физикалық', this)">Физикалық</div>
+                        <div class="matching-item" data-value="Сурет шығару" onclick="selectMatchValue(6, 'Сурет шығару', this)">Сурет шығару</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-6" onclick="submitTask(6, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-6"></div>
+        </div>
+
+        <!-- Тапсырма 7 -->
+        <div class="task-card" id="task-7" data-task-id="7">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">7</span>
+                    <span class="task-type-badge badge-match">Сәйкестендіру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Жұмыс режимдерін сипаттамаларымен сәйкестендіріңіз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-7">
+                <div class="matching-columns">
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">Режим</div>
+                        <div class="matching-item" data-key="Object Mode" data-correct="Басқару" onclick="selectMatchKey(7, 'Object Mode', 'Басқару', this)"><strong>Object Mode</strong></div>
+                        <div class="matching-item" data-key="Edit Mode" data-correct="Геометрия" onclick="selectMatchKey(7, 'Edit Mode', 'Геометрия', this)"><strong>Edit Mode</strong></div>
+                        <div class="matching-item" data-key="Sculpt" data-correct="Мүсіндеу" onclick="selectMatchKey(7, 'Sculpt', 'Мүсіндеу', this)"><strong>Sculpt</strong></div>
+                    </div>
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">Сипаттама</div>
+                        <div class="matching-item" data-value="Геометрия" onclick="selectMatchValue(7, 'Геометрия', this)">Геометрия</div>
+                        <div class="matching-item" data-value="Мүсіндеу" onclick="selectMatchValue(7, 'Мүсіндеу', this)">Мүсіндеу</div>
+                        <div class="matching-item" data-value="Басқару" onclick="selectMatchValue(7, 'Басқару', this)">Басқару</div>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-7" onclick="submitTask(7, 'matching')" disabled>
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-7"></div>
+        </div>
+    </div>
+
+    <!-- 2. БОС ОРЫН (7 тапсырма) -->
+    <div class="topic-section" data-type="fill">
+        <h2 class="topic-section-title">
+            <i class="fas fa-pen"></i>
+            Бос орынды толтыру
+            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-left: auto;">7 тапсырма</span>
+        </h2>
+
+        <div class="task-card" id="task-8" data-task-id="8">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">8</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Vertex — бұл __________</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-8" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(8, 'fill')">
+            <button class="submit-btn" id="btn-8" onclick="submitTask(8, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-8"></div>
+        </div>
+
+        <div class="task-card" id="task-9" data-task-id="9">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">9</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Edge — бұл __________</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-9" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(9, 'fill')">
+            <button class="submit-btn" id="btn-9" onclick="submitTask(9, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-9"></div>
+        </div>
+
+        <div class="task-card" id="task-10" data-task-id="10">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">10</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Face — бұл __________</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-10" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(10, 'fill')">
+            <button class="submit-btn" id="btn-10" onclick="submitTask(10, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-10"></div>
+        </div>
+
+        <div class="task-card" id="task-11" data-task-id="11">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">11</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Extrude жаңа __________ шығарады</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-11" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(11, 'fill')">
+            <button class="submit-btn" id="btn-11" onclick="submitTask(11, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-11"></div>
+        </div>
+
+        <div class="task-card" id="task-12" data-task-id="12">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">12</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Render — бұл __________ алу</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-12" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(12, 'fill')">
+            <button class="submit-btn" id="btn-12" onclick="submitTask(12, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-12"></div>
+        </div>
+
+        <div class="task-card" id="task-13" data-task-id="13">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">13</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Roughness бет __________ анықтайды</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-13" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(13, 'fill')">
+            <button class="submit-btn" id="btn-13" onclick="submitTask(13, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-13"></div>
+        </div>
+
+        <div class="task-card" id="task-14" data-task-id="14">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">14</span>
+                    <span class="task-type-badge badge-fill">Бос орын</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Camera — __________ түсіреді</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="input-14" placeholder="Жауапты осы жерге жазыңыз..." onkeypress="if(event.key==='Enter') submitTask(14, 'fill')">
+            <button class="submit-btn" id="btn-14" onclick="submitTask(14, 'fill')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-14"></div>
+        </div>
+    </div>
+
+    <!-- 3. ТЕСТ (7 тапсырма - 4 нұсқа) -->
+    <div class="topic-section" data-type="quiz">
+        <h2 class="topic-section-title">
+            <i class="fas fa-check-circle"></i>
+            Тест
+            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-left: auto;">7 тапсырма</span>
+        </h2>
+
+        <div class="task-card" id="task-15" data-task-id="15">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">15</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Blender не?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-15">
+                <div class="option-item" onclick="selectOption(15, 'Ойын', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Ойын</span>
+                </div>
+                <div class="option-item" onclick="selectOption(15, '3D бағдарлама', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>3D бағдарлама</span>
+                </div>
+                <div class="option-item" onclick="selectOption(15, 'Видео', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Видео</span>
+                </div>
+                <div class="option-item" onclick="selectOption(15, 'Мәтіндік редактор', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Мәтіндік редактор</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-15" onclick="submitTask(15, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-15"></div>
+        </div>
+
+        <div class="task-card" id="task-16" data-task-id="16">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">16</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Edit Mode не үшін қолданылады?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-16">
+                <div class="option-item" onclick="selectOption(16, 'Камера баптау', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Камера баптау</span>
+                </div>
+                <div class="option-item" onclick="selectOption(16, 'Геометрия өңдеу', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Геометрия өңдеу</span>
+                </div>
+                <div class="option-item" onclick="selectOption(16, 'Жарық қою', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Жарық қою</span>
+                </div>
+                <div class="option-item" onclick="selectOption(16, 'Сурет сақтау', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Сурет сақтау</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-16" onclick="submitTask(16, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-16"></div>
+        </div>
+
+        <div class="task-card" id="task-17" data-task-id="17">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">17</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Extrude (E пернесі) не істейді?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-17">
+                <div class="option-item" onclick="selectOption(17, 'Бояу', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Бояу</span>
+                </div>
+                <div class="option-item" onclick="selectOption(17, 'Жаңа геометрия шығарады', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Жаңа геометрия шығарады</span>
+                </div>
+                <div class="option-item" onclick="selectOption(17, 'Жарық қояды', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Жарық қояды</span>
+                </div>
+                <div class="option-item" onclick="selectOption(17, 'Камера қосады', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Камера қосады</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-17" onclick="submitTask(17, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-17"></div>
+        </div>
+
+        <div class="task-card" id="task-18" data-task-id="18">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">18</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Material-дағы Metallic параметрі не білдіреді?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-18">
+                <div class="option-item" onclick="selectOption(18, 'Түс қою', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Түс қою</span>
+                </div>
+                <div class="option-item" onclick="selectOption(18, 'Металлдық жылтырлық', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Металлдық жылтырлық</span>
+                </div>
+                <div class="option-item" onclick="selectOption(18, 'Жарық күші', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Жарық күші</span>
+                </div>
+                <div class="option-item" onclick="selectOption(18, 'Текстура өлшемі', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Текстура өлшемі</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-18" onclick="submitTask(18, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-18"></div>
+        </div>
+
+        <div class="task-card" id="task-19" data-task-id="19">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">19</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Sun (Күн) жарық көзі қандай сәуле береді?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-19">
+                <div class="option-item" onclick="selectOption(19, 'Барлық бағытқа шашырайды', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Барлық бағытқа шашырайды</span>
+                </div>
+                <div class="option-item" onclick="selectOption(19, 'Бір бағытта параллель сәуле', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Бір бағытта параллель сәуле</span>
+                </div>
+                <div class="option-item" onclick="selectOption(19, 'Тек қызыл түсті жарық', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Тек қызыл түсті жарық</span>
+                </div>
+                <div class="option-item" onclick="selectOption(19, 'Жұмсақ бөлінген жарық', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Жұмсақ бөлінген жарық</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-19" onclick="submitTask(19, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-19"></div>
+        </div>
+
+        <div class="task-card" id="task-20" data-task-id="20">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">20</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Render дегеніміз не?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-20">
+                <div class="option-item" onclick="selectOption(20, 'Өшіру', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Өшіру</span>
+                </div>
+                <div class="option-item" onclick="selectOption(20, '3D сахнаны суретке түсіру', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>3D сахнаны суретке түсіру</span>
+                </div>
+                <div class="option-item" onclick="selectOption(20, 'Анимация жасау', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Анимация жасау</span>
+                </div>
+                <div class="option-item" onclick="selectOption(20, 'Файлды сақтау', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Файлды сақтау</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-20" onclick="submitTask(20, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-20"></div>
+        </div>
+
+        <div class="task-card" id="task-21" data-task-id="21">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">21</span>
+                    <span class="task-type-badge badge-mc">Көп нұсқалы</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Cycles дегеніміз не?</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-21">
+                <div class="option-item" onclick="selectOption(21, 'Камера түрі', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Камера түрі</span>
+                </div>
+                <div class="option-item" onclick="selectOption(21, 'Физикалық рендер қозғалтқышы', this, true)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Физикалық рендер қозғалтқышы</span>
+                </div>
+                <div class="option-item" onclick="selectOption(21, 'Жарық көзі', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Жарық көзі</span>
+                </div>
+                <div class="option-item" onclick="selectOption(21, 'Модификатор', this, false)">
+                    <div class="option-radio"><i class="fas fa-check"></i></div>
+                    <span>Модификатор</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-21" onclick="submitTask(21, 'quiz')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-21"></div>
+        </div>
+    </div>
+
+    <!-- 4. РЕТПЕН ОРНАЛАСТЫРУ (7 тапсырма) -->
+    <div class="topic-section" data-type="order">
+        <h2 class="topic-section-title">
+            <i class="fas fa-sort-amount-down"></i>
+            Ретпен орналастыру
+            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-left: auto;">7 тапсырма</span>
+        </h2>
+
+        <div class="task-card" id="task-22" data-task-id="22">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">22</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Куб қосу қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-22">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Mesh</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Cube</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Add</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-22" onclick="submitTask(22, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-22"></div>
+        </div>
+
+        <div class="task-card" id="task-23" data-task-id="23">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">23</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Сахнаны дайындау қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-23">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Камера</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Render</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Жарық</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-23" onclick="submitTask(23, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-23"></div>
+        </div>
+
+        <div class="task-card" id="task-24" data-task-id="24">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">24</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Объектіні өңдеу қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-24">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Edit Mode</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Extrude</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Add Cube</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-24" onclick="submitTask(24, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-24"></div>
+        </div>
+
+        <div class="task-card" id="task-25" data-task-id="25">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">25</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Материал қосу қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-25">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Color</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Apply</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Material</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-25" onclick="submitTask(25, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-25"></div>
+        </div>
+
+        <div class="task-card" id="task-26" data-task-id="26">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">26</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Камераны баптау қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-26">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Орналастыру</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Қарау</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Камера</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-26" onclick="submitTask(26, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-26"></div>
+        </div>
+
+        <div class="task-card" id="task-27" data-task-id="27">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">27</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Объектіні түрлендіру қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-27">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Move</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Scale</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Select</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-27" onclick="submitTask(27, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-27"></div>
+        </div>
+
+        <div class="task-card" id="task-28" data-task-id="28">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">28</span>
+                    <span class="task-type-badge badge-order">Ретпен орналастыру</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Жарықты баптау қадамдарын дұрыс ретпен орналастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Элементтерді сүйреп, дұрыс ретпен орналастырыңыз</div>
+            <div class="sort-container" id="sort-28">
+                <div class="sort-item" draggable="true" data-order="1" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">1</span><span>Power</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="2" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">2</span><span>Көру</span>
+                </div>
+                <div class="sort-item" draggable="true" data-order="0" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd(event)">
+                    <span class="sort-number">3</span><span>Light</span>
+                </div>
+            </div>
+            <button class="submit-btn" id="btn-28" onclick="submitTask(28, 'order')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-28"></div>
+        </div>
+    </div>
+
+    <!-- 5. MEMORY (7 тапсырма) -->
+    <div class="topic-section" data-type="memory">
+        <h2 class="topic-section-title">
+            <i class="fas fa-brain"></i>
+            Memory (Жад ойыны)
+            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-left: auto;">7 тапсырма</span>
+        </h2>
+
+        <div class="task-card" id="task-29" data-task-id="29">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">29</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-29"></div>
+            <div class="result-message" id="result-29"></div>
+        </div>
+
+        <div class="task-card" id="task-30" data-task-id="30">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">30</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-30"></div>
+            <div class="result-message" id="result-30"></div>
+        </div>
+
+        <div class="task-card" id="task-31" data-task-id="31">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">31</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-31"></div>
+            <div class="result-message" id="result-31"></div>
+        </div>
+
+        <div class="task-card" id="task-32" data-task-id="32">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">32</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-32"></div>
+            <div class="result-message" id="result-32"></div>
+        </div>
+
+        <div class="task-card" id="task-33" data-task-id="33">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">33</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-33"></div>
+            <div class="result-message" id="result-33"></div>
+        </div>
+
+        <div class="task-card" id="task-34" data-task-id="34">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">34</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-34"></div>
+            <div class="result-message" id="result-34"></div>
+        </div>
+
+        <div class="task-card" id="task-35" data-task-id="35">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">35</span>
+                    <span class="task-type-badge badge-memory">Memory</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Терминдерді дұрыс анықтамаларымен жұптастырыңыз</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Екі карточканы ашып, жұптарды тапыңыз</div>
+            <div class="memory-grid" id="memory-35"></div>
+            <div class="result-message" id="result-35"></div>
+        </div>
+    </div>
+
+    <!-- 6. АҚИҚАТ / ЖАЛҒАН (7 тапсырма) -->
+    <div class="topic-section" data-type="truefalse">
+        <h2 class="topic-section-title">
+            <i class="fas fa-balance-scale"></i>
+            Ақиқат / Жалған
+            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-left: auto;">7 тапсырма</span>
+        </h2>
+
+        <div class="task-card" id="task-36" data-task-id="36">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">36</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Blender бағдарламасы тегін және ашық бастапқы кодты бағдарлама</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-36-true" onclick="selectTF(36, true, true, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-36-false" onclick="selectTF(36, false, false, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-36" onclick="submitTask(36, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-36"></div>
+        </div>
+
+        <div class="task-card" id="task-37" data-task-id="37">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">37</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Extrude (E) командасын тек Edit Mode режимінде қолдануға болады</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-37-true" onclick="selectTF(37, true, true, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-37-false" onclick="selectTF(37, false, false, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-37" onclick="submitTask(37, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-37"></div>
+        </div>
+
+        <div class="task-card" id="task-38" data-task-id="38">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">38</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Cycles рендер қозғалтқышы Eevee-ден жылдам жұмыс істейді</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-38-true" onclick="selectTF(38, true, false, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-38-false" onclick="selectTF(38, false, true, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-38" onclick="submitTask(38, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-38"></div>
+        </div>
+
+        <div class="task-card" id="task-39" data-task-id="39">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">39</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Tab пернесі Object Mode пен Edit Mode арасында ауыстыру үшін қолданылады</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-39-true" onclick="selectTF(39, true, true, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-39-false" onclick="selectTF(39, false, false, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-39" onclick="submitTask(39, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-39"></div>
+        </div>
+
+        <div class="task-card" id="task-40" data-task-id="40">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">40</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Roughness = 0 болғанда бет толығымен жылтыр (айна сияқты) болады</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-40-true" onclick="selectTF(40, true, true, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-40-false" onclick="selectTF(40, false, false, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-40" onclick="submitTask(40, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-40"></div>
+        </div>
+
+        <div class="task-card" id="task-41" data-task-id="41">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">41</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Numpad 0 пернесі Camera View (Камера көрінісі) режимін қосады</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-41-true" onclick="selectTF(41, true, true, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-41-false" onclick="selectTF(41, false, false, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-41" onclick="submitTask(41, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-41"></div>
+        </div>
+
+        <div class="task-card" id="task-42" data-task-id="42">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">42</span>
+                    <span class="task-type-badge badge-tf">Ақиқат / Жалған</span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> 10 XP</span>
+            </div>
+            <div class="task-question">Shift + A пернелері жаңа объект қосу мәзірін ашады</div>
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Ақиқат немесе Жалған деп жауап беріңіз</div>
+            <div style="margin-top: 1.5rem;">
+                <button class="tf-btn tf-btn-true" id="tf-42-true" onclick="selectTF(42, true, true, this)">
+                    <i class="fas fa-check-circle"></i> Ақиқат
+                </button>
+                <button class="tf-btn tf-btn-false" id="tf-42-false" onclick="selectTF(42, false, false, this)">
+                    <i class="fas fa-times-circle"></i> Жалған
+                </button>
+            </div>
+            <button class="submit-btn" id="btn-42" onclick="submitTask(42, 'truefalse')">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            <div class="result-message" id="result-42"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let completedTasks = 0;
+const totalTasks = 42;
+let selectedAnswers = {};
+let tfSelections = {};
+
+function updateProgress() {
+    const percent = Math.round((completedTasks / totalTasks) * 100);
+    const bar = document.getElementById('progressBar');
+    if (bar) {
+        bar.style.width = percent + '%';
+        bar.textContent = percent + '%';
+    }
+}
+
+function showSuccess(taskId, message) {
+    const resultDiv = document.getElementById('result-' + taskId);
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'result-message result-success';
+    resultDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+    completedTasks++;
+    updateProgress();
+}
+
+function showError(taskId, message) {
+    const resultDiv = document.getElementById('result-' + taskId);
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'result-message result-error';
+    resultDiv.innerHTML = '<i class="fas fa-times-circle"></i> ' + message;
+}
+
+function markCompleted(taskId) {
+    const card = document.getElementById('task-' + taskId);
+    if (card) {
+        card.classList.add('completed');
+        setTimeout(() => {
+            card.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="completed-badge"><i class="fas fa-check-circle"></i> Орындалды! (+10 XP)</div></div>';
+        }, 2000);
+    }
+}
+
+function filterTasks(type) {
+    const buttons = document.querySelectorAll('.topic-filter-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    const sections = document.querySelectorAll('.topic-section');
+    sections.forEach(section => {
+        if (type === 'all' || section.dataset.type === type) {
+            section.style.display = 'block';
+            section.style.animation = 'fadeIn 0.6s ease forwards';
+        } else {
+            section.style.display = 'none';
+        }
+    });
+}
+
+function selectOption(taskId, option, element, isCorrect) {
+    selectedAnswers[taskId] = { option: option, isCorrect: isCorrect };
+    const container = document.getElementById('options-' + taskId);
+    if (container) {
+        container.querySelectorAll('.option-item').forEach(item => item.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+}
+
+function selectTF(taskId, selectedValue, isCorrect, element) {
+    tfSelections[taskId] = { value: selectedValue, isCorrect: isCorrect };
+    const trueBtn = document.getElementById('tf-' + taskId + '-true');
+    const falseBtn = document.getElementById('tf-' + taskId + '-false');
+    if (trueBtn) trueBtn.classList.remove('selected');
+    if (falseBtn) falseBtn.classList.remove('selected');
+    element.classList.add('selected');
+}
+
+function submitTask(taskId, type) {
+    if (type === 'fill') {
+        const input = document.getElementById('input-' + taskId);
+        const answer = input.value.trim().toLowerCase();
+        const fillAnswers = {8:'нүкте',9:'сызық',10:'бет',11:'геометрия',12:'сурет',13:'жылтырлық',14:'көрініс'};
+        const correctAnswer = fillAnswers[taskId];
+        if (answer === correctAnswer) {
+            input.classList.add('correct'); input.disabled = true;
+            showSuccess(taskId, 'Дұрыс! Жарайсың! (+10 XP)'); markCompleted(taskId);
+        } else {
+            input.classList.add('wrong');
+            showError(taskId, 'Қате! Дұрыс жауап: ' + correctAnswer);
+            setTimeout(() => input.classList.remove('wrong'), 2000);
+        }
+    }
+    else if (type === 'quiz') {
+        const selection = selectedAnswers[taskId];
+        if (!selection) { showError(taskId, 'Жауапты таңдаңыз!'); return; }
+        const container = document.getElementById('options-' + taskId);
+        if (selection.isCorrect) {
+            if (container) container.querySelectorAll('.option-item').forEach(item => { if (item.textContent.trim() === selection.option) item.classList.add('correct'); item.style.pointerEvents = 'none'; });
+            showSuccess(taskId, 'Дұрыс! Жарайсың! (+10 XP)'); markCompleted(taskId);
+        } else {
+            if (container) container.querySelectorAll('.option-item').forEach(item => { if (item.textContent.trim() === selection.option) item.classList.add('wrong'); item.style.pointerEvents = 'none'; });
+            showError(taskId, 'Қате! Бұл тапсырмада жауапты қайта қараңыз.');
+        }
+    }
+    else if (type === 'matching') {
+        const matched = matchedCount[taskId] || 0;
+        const total = document.querySelectorAll('#matching-' + taskId + ' .keys-column .matching-item').length;
+        if (matched === total) { showSuccess(taskId, 'Барлық жұптар дұрыс! (+10 XP)'); markCompleted(taskId); }
+        else { showError(taskId, 'Барлық жұптарды сәйкестендіріңіз! (' + matched + '/' + total + ')'); }
+    }
+    else if (type === 'order') {
+        const items = document.querySelectorAll('#sort-' + taskId + ' .sort-item');
+        let allCorrect = true;
+        items.forEach((item, index) => { const order = parseInt(item.dataset.order); if (order === index) item.classList.add('correct'); else { item.classList.add('wrong'); allCorrect = false; } });
+        if (allCorrect) { showSuccess(taskId, 'Дұрыс рет! Жарайсың! (+10 XP)'); markCompleted(taskId); }
+        else { showError(taskId, 'Реті дұрыс емес! Қайта реттеңіз.'); setTimeout(() => items.forEach(item => item.classList.remove('wrong','correct')), 2000); }
+    }
+    else if (type === 'truefalse') {
+        const selection = tfSelections[taskId];
+        if (!selection) { showError(taskId, 'Ақиқат немесе Жалған деп таңдаңыз!'); return; }
+        const trueBtn = document.getElementById('tf-' + taskId + '-true');
+        const falseBtn = document.getElementById('tf-' + taskId + '-false');
+        if (trueBtn) trueBtn.disabled = true;
+        if (falseBtn) falseBtn.disabled = true;
+        if (selection.isCorrect) {
+            if (selection.value) { if (trueBtn) { trueBtn.style.background='#10b981'; trueBtn.style.color='white'; } }
+            else { if (falseBtn) { falseBtn.style.background='#10b981'; falseBtn.style.color='white'; } }
+            showSuccess(taskId, 'Дұрыс! Жарайсың! (+10 XP)'); markCompleted(taskId);
+        } else {
+            if (selection.value) { if (trueBtn) { trueBtn.style.background='#ef4444'; trueBtn.style.color='white'; } if (falseBtn) { falseBtn.style.background='#10b981'; falseBtn.style.color='white'; } }
+            else { if (falseBtn) { falseBtn.style.background='#ef4444'; falseBtn.style.color='white'; } if (trueBtn) { trueBtn.style.background='#10b981'; trueBtn.style.color='white'; } }
+            showError(taskId, 'Қате! Дұрыс жауап көрсетілді.');
+        }
+    }
+}
+
+let selectedKey = null, selectedKeyElement = null, selectedCorrectValue = null, matchPairs = {}, matchedCount = {};
+
+function selectMatchKey(taskId, key, correctValue, element) {
+    if (element.classList.contains('matched') || element.classList.contains('disabled')) return;
+    const container = document.getElementById('matching-' + taskId);
+    if (container) container.querySelectorAll('.keys-column .matching-item').forEach(item => item.classList.remove('selected-key'));
+    element.classList.add('selected-key');
+    selectedKey = key; selectedCorrectValue = correctValue; selectedKeyElement = element;
+}
+
+function selectMatchValue(taskId, value, element) {
+    if (element.classList.contains('matched') || element.classList.contains('disabled')) return;
+    if (!selectedKey) {
+        element.classList.add('wrong'); setTimeout(() => element.classList.remove('wrong'), 500);
+        const resultDiv = document.getElementById('result-' + taskId);
+        resultDiv.style.display = 'block'; resultDiv.className = 'result-message result-info';
+        resultDiv.innerHTML = '<i class="fas fa-hand-pointer"></i> Алдымен сол жақтан сұрақты таңдаңыз!'; setTimeout(() => resultDiv.style.display = 'none', 2000); return;
+    }
+    const isCorrect = (value === selectedCorrectValue);
+    if (!matchPairs[taskId]) matchPairs[taskId] = {}; matchPairs[taskId][selectedKey] = value;
+    if (isCorrect) {
+        element.classList.add('matched'); element.classList.add('disabled');
+        if (selectedKeyElement) { selectedKeyElement.classList.add('matched'); selectedKeyElement.classList.add('disabled'); selectedKeyElement.classList.remove('selected-key'); }
+        if (!matchedCount[taskId]) matchedCount[taskId] = 0; matchedCount[taskId]++;
+        const container = document.getElementById('matching-' + taskId);
+        const totalKeys = container ? container.querySelectorAll('.keys-column .matching-item').length : 0;
+        if (matchedCount[taskId] === totalKeys) {
+            const btn = document.getElementById('btn-' + taskId);
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Барлық сәйкестендіру дайын! Жіберу'; }
+            setTimeout(() => submitTask(taskId, 'matching'), 500);
+        }
+    } else {
+        element.classList.add('wrong'); if (selectedKeyElement) selectedKeyElement.classList.add('wrong');
+        const resultDiv = document.getElementById('result-' + taskId);
+        resultDiv.style.display = 'block'; resultDiv.className = 'result-message result-error';
+        resultDiv.innerHTML = '<i class="fas fa-times-circle"></i> Дұрыс емес! Қайта байқап көріңіз.';
+        setTimeout(() => { element.classList.remove('wrong'); if (selectedKeyElement) { selectedKeyElement.classList.remove('wrong'); selectedKeyElement.classList.remove('selected-key'); } resultDiv.style.display = 'none'; }, 1000);
+    }
+    selectedKey = null; selectedCorrectValue = null; selectedKeyElement = null;
+}
+
+let draggedItem = null;
+function dragStart(e) { draggedItem = e.target; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function dragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function drop(e) {
+    e.preventDefault();
+    if (e.target.classList.contains('sort-item') && e.target !== draggedItem) {
+        const container = draggedItem.parentNode;
+        const allItems = [...container.querySelectorAll('.sort-item')];
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(e.target);
+        if (draggedIndex < targetIndex) e.target.after(draggedItem); else e.target.before(draggedItem);
+        updateSortNumbers(container);
+    }
+}
+function dragEnd(e) { e.target.classList.remove('dragging'); }
+function updateSortNumbers(container) {
+    container.querySelectorAll('.sort-item').forEach((item, index) => { const numSpan = item.querySelector('.sort-number'); if (numSpan) numSpan.textContent = index + 1; });
+}
+
+const memoryData = {
+    29: { pairs: [['Vertex','Нүкте'],['Edge','Сызық'],['Face','Бет'],['Render','Сурет']] },
+    30: { pairs: [['Edge','Сызық'],['Vertex','Нүкте'],['Scale','Өлшем'],['Rotate','Бұру']] },
+    31: { pairs: [['Face','Бет'],['Vertex','Нүкте'],['Edge','Сызық'],['Camera','Көрініс']] },
+    32: { pairs: [['Extrude','Геометрия'],['Render','Сурет'],['Scale','Өлшем'],['Move','Жылжыту']] },
+    33: { pairs: [['Render','Сурет'],['Camera','Көрініс'],['Light','Жарық'],['Material','Текстура']] },
+    34: { pairs: [['Camera','Көрініс'],['Light','Жарық'],['Render','Сурет'],['Viewport','3D терезе']] },
+    35: { pairs: [['Light','Жарық'],['Camera','Көрініс'],['Sun','Күн'],['Point','Нүкте']] }
+};
+let memoryStates = {};
+
+function initMemory(taskId) {
+    const grid = document.getElementById('memory-' + taskId);
+    if (!grid) return;
+    const data = memoryData[taskId];
+    if (!data) return;
+    let cards = [];
+    data.pairs.forEach(pair => { cards.push({id:pair[0],text:pair[0],pair:pair[1]}); cards.push({id:pair[0],text:pair[1],pair:pair[0]}); });
+    cards.sort(() => Math.random() - 0.5);
+    memoryStates[taskId] = { cards:cards, flipped:[], matched:0, total:data.pairs.length };
+    cards.forEach((card, index) => {
+        const div = document.createElement('div'); div.className = 'memory-card';
+        div.dataset.index = index; div.dataset.id = card.id;
+        div.innerHTML = '<span class="card-icon">?</span>';
+        div.onclick = () => flipCard(taskId, index, div); grid.appendChild(div);
+    });
+}
+
+function flipCard(taskId, index, element) {
+    const state = memoryStates[taskId];
+    if (!state || element.classList.contains('flipped') || element.classList.contains('matched') || state.flipped.length >= 2) return;
+    const card = state.cards[index];
+    element.classList.add('flipped'); element.innerHTML = card.text;
+    state.flipped.push({index:index, element:element, id:card.id});
+    if (state.flipped.length === 2) setTimeout(() => checkMemoryMatch(taskId), 800);
+}
+
+function checkMemoryMatch(taskId) {
+    const state = memoryStates[taskId];
+    if (!state || state.flipped.length !== 2) return;
+    const [first, second] = state.flipped;
+    const card1 = state.cards[first.index]; const card2 = state.cards[second.index];
+    if (card1.id === card2.id && card1.text !== card2.text) {
+        first.element.classList.add('matched'); second.element.classList.add('matched'); state.matched++;
+        if (state.matched === state.total) { showSuccess(taskId, 'Барлық жұптар табылды! (+10 XP)'); markCompleted(taskId); }
+    } else {
+        first.element.classList.remove('flipped'); first.element.innerHTML = '<span class="card-icon">?</span>';
+        second.element.classList.remove('flipped'); second.element.innerHTML = '<span class="card-icon">?</span>';
+    }
+    state.flipped = [];
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    for (let i = 29; i <= 35; i++) initMemory(i);
+    updateProgress();
+});
+</script>
+{% endblock %}

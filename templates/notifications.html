@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Хабарламалар{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notif-container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+    .notif-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+    .notif-header h1 { font-size: 2rem; font-weight: 800; }
+
+    .notif-list { display: flex; flex-direction: column; gap: 1rem; }
+    .notif-item {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        transition: all 0.3s;
+        border-left: 4px solid #667eea;
+    }
+    .notif-item.unread { border-left-color: #10b981; background: #f0fdf4; }
+    .notif-item:hover { transform: translateX(5px); }
+
+    .notif-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .notif-icon.grade { background: linear-gradient(135deg, #10b981, #34d399); }
+    .notif-icon.system { background: linear-gradient(135deg, #f472b6, #fbbf24); }
+
+    .notif-content { flex: 1; }
+    .notif-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.3rem; }
+    .notif-message { color: #666; margin-bottom: 0.5rem; }
+    .notif-time { font-size: 0.8rem; color: #64748b; }
+
+    .notif-badge {
+        background: #10b981;
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .empty-state { text-align: center; padding: 3rem; color: #64748b; }
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notif-container">
+    <div class="notif-header">
+        <a href="/student_dashboard" class="back-btn" style="color: white; opacity: 0.8; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <i class="fas fa-arrow-left"></i> Оқушы панелі
+        </a>
+        <h1><i class="fas fa-bell"></i> Хабарламалар</h1>
+    </div>
+
+    {% if notifications %}
+    <div class="notif-list">
+        {% for notif in notifications %}
+        <div class="notif-item {% if not notif.is_read %}unread{% endif %}">
+            <div class="notif-icon {% if 'баға' in notif.title.lower() %}grade{% else %}system{% endif %}">
+                <i class="fas fa-{% if 'баға' in notif.title.lower() %}star{% else %}bell{% endif %}"></i>
+            </div>
+            <div class="notif-content">
+                <div class="notif-title">{{ notif.title }}</div>
+                <div class="notif-message">{{ notif.message }}</div>
+                <div class="notif-time"><i class="fas fa-clock"></i> {{ notif.created_at }}</div>
+            </div>
+            {% if not notif.is_read %}
+            <span class="notif-badge">Жаңа</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>Хабарламалар жоқ</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

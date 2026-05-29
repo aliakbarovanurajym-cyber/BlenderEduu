@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="kk" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Blender 3D - Оқу платформасы{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --surface: #ffffff;
+            --surface-elevated: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --radius-sm: 0.5rem;
+            --radius: 0.75rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+        }
+
+        [data-theme="dark"] {
+            --dark: #f8fafc;
+            --light: #0f172a;
+            --white: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --surface: #1e293b;
+            --surface-elevated: #334155;
+        }
+
+        [data-theme="dark"] body {
+            background: var(--light);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .content-card,
+        [data-theme="dark"] .section-card,
+        [data-theme="dark"] .stat-item,
+        [data-theme="dark"] .user-stat-card,
+        [data-theme="dark"] .progress-card,
+        [data-theme="dark"] .leaderboard-card,
+        [data-theme="dark"] .topic-item,
+        [data-theme="dark"] .task-card,
+        [data-theme="dark"] .upload-section,
+        [data-theme="dark"] .practical-card,
+        [data-theme="dark"] .auth-card,
+        [data-theme="dark"] .notif-item,
+        [data-theme="dark"] .breakdown-item,
+        [data-theme="dark"] .progress-info,
+        [data-theme="dark"] .modal-content {
+            background: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important;
+        }
+
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .fill-input,
+        [data-theme="dark"] .grade-input,
+        [data-theme="dark"] .chat-input {
+            background: #1e293b;
+            color: var(--text-primary);
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .option-item,
+        [data-theme="dark"] .matching-item,
+        [data-theme="dark"] .class-card,
+        [data-theme="dark"] .stat-box {
+            background: #1e293b !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .student-table th,
+        [data-theme="dark"] .grade-table th {
+            background: #0f3460 !important;
+        }
+
+        [data-theme="dark"] .student-table td,
+        [data-theme="dark"] .grade-table td {
+            border-color: #1e293b;
+        }
+
+        [data-theme="dark"] .theory-text,
+        [data-theme="dark"] .topic-item-desc,
+        [data-theme="dark"] .notif-message,
+        [data-theme="dark"] .leaderboard-class,
+        [data-theme="dark"] .stat-item-label,
+        [data-theme="dark"] .breakdown-label,
+        [data-theme="dark"] .upload-hint,
+        [data-theme="dark"] .upload-text {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.85) !important;
+        }
+
+        [data-theme="dark"] .footer {
+            background: #0f3460 !important;
+        }
+
+        [data-theme="dark"] .chat-panel {
+            background: var(--card-bg) !important;
+        }
+
+        [data-theme="dark"] .chat-message.bot {
+            background: #1e293b !important;
+            color: var(--text-primary) !important;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 0.8rem 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--white);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i { font-size: 1.8rem; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99,102,241,0.4);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .btn-secondary:hover {
+            background: #0891b2;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--white);
+            color: var(--white);
+        }
+
+        .btn-outline:hover {
+            background: var(--white);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #E8ECF1;
+            border-radius: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: #E8ECF1;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* Stats */
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: #D4EDDA;
+            color: #155724;
+            border: 2px solid #C3E6CB;
+        }
+
+        .alert-error {
+            background: #F8D7DA;
+            color: #721C24;
+            border: 2px solid #F5C6CB;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        /* Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+        }
+
+        .chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 20px rgba(99,102,241,0.4);
+            transition: all 0.3s;
+        }
+
+        .chat-button:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-panel {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            height: 500px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-panel.active { display: flex; }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            padding: 1rem;
+            font-weight: 700;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+
+        .chat-message.user {
+            background: var(--primary);
+            color: var(--white);
+            margin-left: auto;
+        }
+
+        .chat-message.bot {
+            background: #F0F2F5;
+            color: var(--dark);
+        }
+
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid #E8ECF1;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #E8ECF1;
+            border-radius: 25px;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: var(--white);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        /* Notification badge */
+        .notif-badge-nav {
+            background: #ef4444;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 0.3rem;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+<base target="_self">
+<base target="_blank">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-cube"></i>
+                Blender 3D
+            </a>
+            <div class="nav-links">
+                <a href="/">Басты бет</a>
+                {% if session.get('user_type') == 'teacher' %}
+                    <a href="/teacher_dashboard">Мұғалім панелі</a>
+                    <a href="/logout" class="btn btn-outline">Шығу</a>
+                {% elif session.get('user_type') == 'student' %}
+                    <a href="/student_dashboard">Оқушы панелі</a>
+                    <a href="/practice">Интерактивті тапсырмалар</a>
+                    <a href="/my_grades">Бағаларым</a>
+                    <a href="/notifications">Хабарламалар {% if unread_count > 0 %}<span class="notif-badge-nav">{{ unread_count }}</span>{% endif %}</a>
+                    <a href="/certificate">Сертификат</a>
+                    <a href="/logout" class="btn btn-outline">Шығу</a>
+                {% else %}
+                    <a href="/login_teacher">Мұғалім</a>
+                    <a href="/login_student">Оқушы</a>
+                {% endif %}
+
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- AI Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">
+                <i class="fas fa-robot"></i> 🤖 Робот Көмекші — Blender FAQ
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message bot">Сәлем! Мен 🤖 <b>Робот Көмекші</b> — Blender 3D бойынша жиі қойылатын сұрақтарға жауап беремін! Сұрағыңызды жазыңыз, мысалы: «Blender не?», «Edit Mode не?», «Render дегеніміз не?» және т.б.</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Сұрақ жазыңыз...">
+                <button class="btn btn-primary" onclick="sendMessage()" style="padding: 0.5rem 1rem;">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chat-button" onclick="toggleChat()">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 Blender 3D Оқу Платформасы. Барлық құқықтар қорғалған.</p>
+    </footer>
+
+    <script>
+        // Dark Mode
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                icon.className = 'fas fa-moon';
+                text.textContent = 'Dark';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                icon.className = 'fas fa-sun';
+                text.textContent = 'Light';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Сақталған тақырыпты жүктеу
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'dark') {
+            document.getElementById('themeIcon').className = 'fas fa-sun';
+            document.getElementById('themeText').textContent = 'Light';
+        }
+
+        function toggleChat() {
+            document.getElementById('chatPanel').classList.toggle('active');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const messagesDiv = document.getElementById('chatMessages');
+            messagesDiv.innerHTML += `<div class="chat-message user">${message}</div>`;
+            input.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Show typing indicator
+            const typingId = 'typing-' + Date.now();
+            messagesDiv.innerHTML += `<div class="chat-message bot" id="${typingId}"><i class="fas fa-spinner fa-spin"></i> Ойлап жатырмын...</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // FAQ Knowledge Base — 7 бөлім, 105 сұрақ
+            const faqAnswers = {
+                // § 1. Интерфейс
+                'blender': 'Blender — тегін, ашық бастапқы кодты 3D модельдеу, анимация, рендеринг және бейне монтаж бағдарламасы. Кәсіби 3D графика саласында кең қолданылады.',
+                'интерфейс': 'Blender интерфейсі 3D Viewport, Outliner, Properties, Timeline, Toolbar және Header бөлімдерінен тұрады. Әр бөлім өзінің қызметін атқарады.',
+                'viewport': '3D Viewport — Blender-дің негізгі жұмыс аймағы. Мұнда сіз 3D объектілерді көре аласыз, оларды өңдей аласыз, камера бұрышын өзгерте аласыз.',
+                'object mode': 'Object Mode — объектілерді бүтіндей басқару режимі. Объектілерді жылжыту (G), айналдыру (R), масштабтау (S), жаңа объектілер қосу (Shift+A) сияқты операциялар жасалады.',
+                'edit mode': 'Edit Mode — mesh объектілерін егжей-тегжейлі өңдеу режимі. Vertex, Edge және Face деңгейінде жұмыс істейді. Extrude, Loop Cut, Bevel құралдары қолданылады. Tab пернесімен ауысады.',
+                'g перне': 'G (Grab) пернесі — объектіні жылжыту. G + X/Y/Z — тек бір ось бойынша жылжыту. Сан енгізу — нақты қашықтық (мысалы, G + X + 2 + Enter).',
+                'r перне': 'R (Rotate) пернесі — объектіні айналдыру. R + 90 + Enter — 90 градусқа айналдыру. R + X/Y/Z — тек бір ось бойынша.',
+                's перне': 'S (Scale) пернесі — объектінің өлшемін өзгерту. S + 2 + Enter — екі есе үлкейту. S + X/Y/Z — тек бір ось бойынша.',
+                'shift a': 'Shift+A — жаңа объект қосу мәзірін ашады. Mesh, Curve, Light, Camera және басқа санаттардан таңдауға болады.',
+                '3d курсор': '3D курсор — жаңа объектілер пайда болатын нүктелік белгіші. Сол тышқан батырмасымен орналастыруға болады. Shift+S → Cursor to World Origin — ортасына қайтару.',
+                'коллекция': 'Collection — объектілерді топтастыру құралы. Outliner-де көрсетіледі. Объектілерді көрсету/жасыру, құлыптау мүмкіндіктері бар.',
+                'undo': 'Undo — Ctrl+Z (болдырмау). Redo — Shift+Ctrl+Z (қайталау). Әдепкі бойынша 32 қадамды болдырмауға болады. Edit → Preferences → System-де реттеуге болады.',
+                'файл сақтау': 'Ctrl+S — сақтау. Ctrl+Shift+S — жаңа атаумен сақтау. .blend кеңейтілімімен сақталады. Auto Save — автосақтауды Edit → Preferences → Save & Load-те қосуға болады.',
+                'тіл': 'Edit → Preferences → Interface → Translation бөлімінде тілді өзгертуге болады. Қазақ толық қолжетімді болмауы мүмкін, орыс немесе ағылшын тілдерін қолданыңыз.',
+
+                // § 2. Модельдеу
+                'mesh': 'Mesh — 3D модельдің негізгі құрылымы. Vertex (нүктелер), Edge (қырлар) және Face (беттер) элементтерінен тұрады.',
+                'vertex': 'Vertex (нүкте) — 3D кеңістіктегі ең кішкентай нүкте. Екі vertex қосылғанда Edge, үш немесе төрт vertex қосылғанда Face пайда болады.',
+                'edge': 'Edge (қыр) — екі vertex-ті қосатын сызық. Loop Cut, Bevel, Extrude операцияларымен өңделеді.',
+                'face': 'Face (бет) — үш немесе төрт edge-термен шектелген аудан. Triangle (үшбұрыш) және Quad (төртбұрыш) түрлері бар.',
+                'extrude': 'Extrude (E пернесі) — mesh элементтерінен жаңа геометрия шығару. Face-ті таңдап, E пернесін басыңыз. Alt+E — Extrude Along Normals.',
+                'loop cut': 'Loop Cut (Ctrl+R) — mesh-ті көлденең қиып, жаңа edge loop қосу. Тышқанды айналдырып саның реттеңіз, сол тышқан батырмасымен растаңыз.',
+                'bevel': 'Bevel (Ctrl+B) — edge немесе vertex-терді скруглить (дөңестеу). Тышқанды айналдырып өлшемін реттеңіз. Bevel Modifier-ді де қолдануға болады.',
+                'boolean': 'Boolean модификаторы — екі mesh арасында логикалық операциялар: Union (біріктіру), Difference (айыру), Intersect (қиылыс). Modifier Properties панелінде қосылады.',
+                'subdivision': 'Subdivision Surface — mesh-ті автоматты түрде сазалау модификаторы. Modifier Properties-те қосылады. Ctrl+1/2/3 пернелерімен тез қосуға болады.',
+                'shade smooth': 'Shade Smooth — объектінің беттерін тегістеу. Object → Shade Smooth. Shade Flat — қатты бейнелеу. Auto Smooth — бұрыштан асқан жерлерді қатты ету.',
+                'mirror': 'Mirror модификаторы — объектіні айнада көрсету (симметриялау). Modifier Properties-те қосылады. X, Y, Z осьтерін таңдауға болады. Merge — симметрия осіндеғы vertex-терді біріктіру.',
+                'knife': 'Knife (K пернесі) — mesh-ті еркін қиып, жаңа edge-тер қосу. K пернесін басып, қиынатын сызықты сызыңыз, Enter-мен растаңыз. Knife Project — проекция бойынша қию.',
+
+                // § 3. Материалдар
+                'материал': 'Материал — объектінің сыртқы көрінісін анықтайтын параметрлер. Principled BSDF шейдері ең кең қолданылатын түрі. Properties → Material Properties-те қосылады.',
+                'текстура': 'Текстура — объектінің бетіне қолданылатын сурет немесе procedural үлгі. Image Texture, Procedural Texture, Normal Map, Bump Map түрлері бар. UV Mapping арқылы жайылады.',
+                'base color': 'Base Color — материалдың негізгі түсін анықтайды. RGB түс моделінде беріледі. Hex кодын енгізуге немесе түс таңдау құралын қолдануға болады.',
+                'metallic': 'Metallic (0-1) — материалдың металлдық қасиетін анықтайды. 0 = металл емес, 1 = таза металл. Metallic = 1 болғанда Specular өшіріледі.',
+                'roughness': 'Roughness (0-1) — беттің тегіс немесе таяз екенін анықтайды. 0 = айна сияқты жылтыр, 1 = толық таяз. Roughness Map арқылы әр бөліктің әртүрлі жылтырлығын беруге болады.',
+                'shader editor': 'Shader Editor — материалдарды визуалды түйіндер (nodes) арқылы құру терезесі. Principled BSDF, Mix Shader, ColorRamp, Noise Texture сияқты түйіндерді қосуға болады.',
+                'uv mapping': 'UV Mapping — 3D модельдің 2D жазықтыққа проекциялануы. UV Editor-де UV аралықтарын реттеуге болады. Smart UV Project, Unwrap, Project from View операциялары бар.',
+                'normal map': 'Normal Map — беттің қаттылығын алдап көрсететін картасы. Нақты геометрия қоспай-ақ ұсақ бөлшектерді имитациялайды. Shader Editor-де Normal Map түйіні арқылы қосылады.',
+                'procedural': 'Procedural Texture — алгоритм бойынша генерацияланған текстура. Noise, Voronoi, Musgrave, Wave, Gradient сияқты түрлері бар. Shader Editor-де Texture түйіндері арқылы құрылады.',
+                'transparency': 'Transparency (мөлдірлік) — Principled BSDF-тың Transmission (0-1) параметрі арқылы реттеледі. 1 = толық мөлдір (шығы, су). Eevee-де Screen Space Reflections қосу керек.',
+
+                // § 4. Жарық
+                'жарық': 'Blender-де 4 негізгі жарық түрі бар: Point (нүктелік, барлық бағытқа), Sun (күн, параллель сәулелер), Spot (бағытталған, конус), Area (аумақтық, жұмсақ).',
+                'point light': 'Point Light — бір нүктеден барлық бағытқа шашыратын жарық. Шам, свеча сияқты. Power — жарық күші, Radius — жұмсақтық.',
+                'sun light': 'Sun Light — шексіз қашықтықтан келетін параллель сәулелер. Күннің жарығын имитациялайды. Тек бағыты маңызды, позициясы маңызды емес.',
+                'area light': 'Area Light — төртбұрышты немесе дөңгелек ауданнан шығатын жұмсақ жарық. Фотостудия softbox сияқты. Өлшемі үлкен болғанда жарық жұмсарады.',
+                'spot light': 'Spot Light — конус тәрізді шектеулі ауданды жарықтандырады. Сахна жарығы, фара сияқты. Spot Size — конус бұрышы, Spot Blend — шекара жұмсақтығы.',
+                'hdri': 'HDRI (High Dynamic Range Image) — жоғары динамикалық диапазонды сурет. World Properties → Environment Texture арқылы қосылады. Жарық беру және шағылдану қамтамасыз етеді.',
+                'камера': 'Камера қосу: Shift+A → Camera. Камераны объектіге бағыттау: камераны таңдап, объектіні таңдап, Ctrl+Alt+Numpad 0. Numpad 0 — Camera View режимі.',
+                'focal length': 'Focal Length — камера линзасының бұрыштық қамтуын анықтайды (mm). 50mm = стандартты, 35mm = кең бұрыш, 85mm+ = телефото.',
+                'depth of field': 'Depth of Field (DOF) — белгілі қашықтықтағы объектілерді таза, қалғанын бұлыңғыр көрсету. Camera Properties → Depth of Field. Focus Distance немесе Focus Object параметрлері.',
+                'track to': 'Track To Constraint — камераны әрқашан белгілі объектіге бағыттап ұстайды. Камераны таңдап, объектіні қосымша таңдап, Ctrl+T → Track To.',
+
+                // § 5. Рендеринг
+                'render': 'Render — 3D сахнаны 2D суретке немесе видеоға айналдыру. F12 — суретті рендерлеу, Ctrl+F12 — анимацияны рендерлеу.',
+                'eevee': 'Eevee — real-time рендер қозғалтқышы. Жылдам, бірақ физикалық дәлдігі төмен. Превью және ойындар үшін қолданылады.',
+                'cycles': 'Cycles — path tracing рендер қозғалтқышы. Физикалық дәл, бірақ баяу. Фотореалистік визуализациялар үшін қолданылады. GPU рендерингі жылдамдау.',
+                'samples': 'Samples — рендерлеу сапасы мен уақытын анықтайды. Көп samples = аз шу, жоғары сапа, бірақ ұзақ уақыт. Render Properties → Sampling бөлімінде реттеледі.',
+                'denoise': 'Denoise — рендерленген суреттегі шуды автоматты түрде тазалау. Render Properties → Sampling → Denoising. OpenImageDenoise, OptiX Denoiser түрлері бар.',
+                'noise': 'Noise (шу) — рендерленген суреттегі түйіршікті көрініс. Төмен samples-те, аз жарықта немесе қиын материалдарда пайда болады. Samples арттыру немесе Denoise қосу арқылы азайтылады.',
+                'resolution': 'Render Resolution — шығыс суреттің өлшемі (Width × Height пиксельдерде). Resolution Percentage (%) — ажыратымдылықты реттеу. 100% = толық ажыратымдылық.',
+                'render layers': 'Render Layers — сахнаның әртүрлі элементтерін бөлек рендерлеу. View Layer Properties панелінде реттеледі. Compositing-те әр layer-ді бөлек өңдеуге болады.',
+                'gpu': 'GPU рендерингі — Graphics Processing Unit арқылы рендерлеу. Cycles-те Render Properties → Device → GPU Compute арқылы қосылады. NVIDIA (CUDA/OptiX), AMD (HIP), Apple (Metal) қолдайды.',
+                'compositing': 'Compositing — рендерленген суретті пост-процессинг. Color Correction, Glow, Glare, Mist, Vignette сияқты эффектілер. Compositing Editor-де node-based жүйе арқылы жасалады.',
+                'фотореалистік': 'Фотореалистік визуализация: 1) PBR материалдарын қолдану, 2) HDRI жарық ортасы, 3) Cycles рендері, 4) Дұрыс камера (DOF, Focal Length), 5) Post-processing.',
+
+                // § 6. Анимация
+                'анимация': 'Анимация — уақыт бойынша объектілердің қасиеттерінің өзгерісі. Keyframe (I пернесі) арқылы жасалады. Location, Rotation, Scale, Shape Keys сияқты қасиеттерді анимациялауға болады.',
+                'keyframe': 'Keyframe (I пернесі) — анимацияның негізгі кадры. Объектіні қалаған күйге келтіріп, I пернесін басыңыз. Auto Keyframe (Timeline-дағы қызыл дөңгелек) — автоматты keyframe қою.',
+                'timeline': 'Timeline — анимация уақыт шкаласы. Frame саны, Start/End Frame, Current Frame көрсетіледі. Play (Space), Dope Sheet, Graph Editor терезелеріне ауыса алады.',
+                'frame': 'Frame (кадр) — анимацияның уақыт бірлігі. Стандартты кадр жылдамдығы: 24 fps (кино), 30 fps (NTSC), 25 fps (PAL), 60 fps (ойындар). Frame = уақыт × fps.',
+                'dope sheet': 'Dope Sheet — анимацияның барлық keyframe-терінің шолу кестесі. Барлық объектілердің анимация уақытын бір уақытта көруге және өңдеуге болады.',
+                'graph editor': 'Graph Editor — анимация қисықтарын визуалды өңдеу. Bezier, Linear, Constant интерполяция түрлері. Keyframe-терді жылжыту, қисық пішінін өзгерту мүмкіндіктері бар.',
+                'shape keys': 'Shape Keys (мorph targets) — объектінің пішінін өзгерту. Basis (негізгі) және Key 1, Key 2 (қосымша) пішіндері. Value параметрі (0-1) аралықта интерполяцияланады.',
+                'path animation': 'Path Animation — объектіні қисық бойымен қозғалту. Curve таңдап, Curve Properties → Path Animation қосу. Объектіні Curve-ге Follow Path constraint арқылы байлау.',
+                'follow path': 'Follow Path Constraint — объектіні қисық бойымен қозғалту. Объектіні таңдап, Constraints → Follow Path → Curve таңдау. Offset параметрі қозғалыс уақытын реттейді.',
+                'constraints': 'Constraints — объектілердің қозғалысын шектеу немесе басқару құралдары. Follow Path, Track To, Copy Location, Limit Location сияқты түрлері бар. Properties панелінің Constraint Properties бөлімінде қосылады.',
+                'interpolation': 'Interpolation — keyframe арасындағы қисық пішіні. Bezier (жұмсақ), Linear (түзу), Constant (кідіріс) түрлері бар. Graph Editor-де өзгертуге болады.',
+                'render animation': 'Анимацияны рендерлеу: Output Properties панелінде Output Path (шығыс жолы) көрсетіңіз. Ctrl+F12 — рендерлеуді бастау. FFmpeg арқылы MP4, AVI, MOV форматтарында сақтауға болады.',
+
+                // § 7. Жоба
+                'жоба': '3D жобаны жоспарлау: 1) Тақырыпты таңдау, 2) Reference суреттерін жинау, 3) Модельдеу, 4) Материалдар мен текстуралар, 5) Жарық пен камера, 6) Рендерлеу, 7) Презентация.',
+                'reference': 'Reference материалдар — нақты дүниедегі объектілердің суреттері. Pinterest, Google Images, ArtStation сайттарынан жинауға болады. Blender-де Reference Image арқылы viewport-та көрсетуге болады.',
+                'export': 'Экспорттау: File → Export → FBX, OBJ, STL, glTF және т.б. Export Settings-те Scale, Forward Axis, Up Axis параметрлерін реттеуге болады.',
+                'бағалау': '3D жобаны бағалау критерийлері: 1) Модельдің сапасы (topology, пропорция), 2) Материалдардың дұрыстығы, 3) Жарықтандыру, 4) Камера бұрышы, 5) Рендер сапасы, 6) Креативтілік.',
+            };
+
+            // Find matching FAQ answer
+            let answer = null;
+            const lowerMsg = message.toLowerCase();
+
+            for (const [key, value] of Object.entries(faqAnswers)) {
+                if (lowerMsg.includes(key.toLowerCase())) {
+                    answer = value;
+                    break;
+                }
+            }
+
+            // Remove typing indicator
+            const typingEl = document.getElementById(typingId);
+            if (typingEl) typingEl.remove();
+
+            if (answer) {
+                messagesDiv.innerHTML += `<div class="chat-message bot"><div style="font-size:0.85rem; color:#6366f1; margin-bottom:0.3rem;"><i class="fas fa-book"></i> Жиі қойылатын сұрақтардан:</div>${answer}</div>`;
+            } else {
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({message: message})
+                    });
+                    const data = await response.json();
+                    if (data.response && data.response.length > 10) {
+                        messagesDiv.innerHTML += `<div class="chat-message bot">${data.response}</div>`;
+                    } else {
+                        messagesDiv.innerHTML += `<div class="chat-message bot">Кешіріңіз, бұл сұраққа нақты жауап таба алмадым. 🎯 <b>Мен мынадай сұрақтарға жауап беремін:</b><br><br>• Blender не? / Интерфейс бөлімдері<br>• Object Mode / Edit Mode<br>• G, R, S пернелері<br>• Extrude / Loop Cut / Bevel<br>• Материалдар (Base Color, Metallic, Roughness)<br>• Жарық түрлері (Point, Sun, Area, Spot)<br>• Render / Eevee / Cycles<br>• Анимация / Keyframe<br><br>Сұрағыңызды осы тақырыптарға қатысты қойып көріңіз! 🤖</div>`;
+                    }
+                } catch (e) {
+                    messagesDiv.innerHTML += `<div class="chat-message bot">🎯 <b>Робот Көмекші</b> мынадай сұрақтарға жауап береді:<br><br>• Blender не? / Интерфейс бөлімдері<br>• Object Mode / Edit Mode<br>• G, R, S пернелері<br>• Extrude / Loop Cut / Bevel<br>• Материалдар (Base Color, Metallic, Roughness)<br>• Жарық түрлері (Point, Sun, Area, Spot)<br>• Render / Eevee / Cycles<br>• Анимация / Keyframe<br><br>Сұрағыңызды осы тақырыптарға қатысты қойып көріңіз! 🤖</div>`;
+                }
+            }
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

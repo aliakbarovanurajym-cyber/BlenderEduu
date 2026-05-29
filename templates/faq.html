@@ -1,0 +1,1352 @@
+{% extends "base.html" %}
+
+{% block title %}Жиі қойылатын сұрақтар — Blender FAQ{% endblock %}
+
+{% block extra_css %}
+<style>
+    .faq-container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+
+    /* Hero Header */
+    .faq-hero {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 25px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .faq-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%; right: -20%;
+        width: 400px; height: 400px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+    .faq-hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; position: relative; }
+    .faq-hero p { font-size: 1.1rem; opacity: 0.9; position: relative; }
+    .faq-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1.2rem;
+        border-radius: 50px;
+        margin-top: 1rem;
+        font-weight: 600;
+    }
+
+    /* Search Bar */
+    .faq-search-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .faq-search-icon {
+        color: #6366f1;
+        font-size: 1.3rem;
+    }
+    .faq-search-input {
+        flex: 1;
+        border: none;
+        font-size: 1.1rem;
+        font-family: 'Nunito', sans-serif;
+        outline: none;
+        color: #0f172a;
+    }
+    .faq-search-input::placeholder { color: #94a3b8; }
+    .faq-search-clear {
+        background: #f1f5f9;
+        border: none;
+        color: #64748b;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 600;
+        display: none;
+    }
+    .faq-search-clear.visible { display: block; }
+
+    /* Section Cards */
+    .faq-section {
+        background: white;
+        border-radius: 20px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 2px solid transparent;
+        transition: all 0.3s;
+    }
+    .faq-section:hover { border-color: #6366f1; }
+    .faq-section-header {
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        transition: all 0.3s;
+    }
+    .faq-section-header:hover { background: linear-gradient(135deg, #eef2ff, #e0e7ff); }
+    .faq-section-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .faq-section-title {
+        flex: 1;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .faq-section-count {
+        background: #6366f1;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .faq-section-toggle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6366f1;
+        font-size: 1rem;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .faq-section.open .faq-section-toggle { transform: rotate(180deg); }
+
+    /* Questions List */
+    .faq-questions {
+        display: none;
+        padding: 0 2rem 1.5rem;
+    }
+    .faq-section.open .faq-questions { display: block; }
+    .faq-question-item {
+        padding: 1.2rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        transition: all 0.3s;
+    }
+    .faq-question-item:last-child { border-bottom: none; }
+    .faq-question-item:hover { padding-left: 0.5rem; }
+    .faq-question-num {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    .faq-question-text {
+        flex: 1;
+        font-size: 1.05rem;
+        color: #334155;
+        line-height: 1.5;
+        font-weight: 600;
+    }
+    .faq-ask-btn {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.3s;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .faq-ask-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(99,102,241,0.4);
+    }
+
+    /* No Results */
+    .faq-no-results {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+        display: none;
+    }
+    .faq-no-results.visible { display: block; }
+    .faq-no-results i { font-size: 3rem; margin-bottom: 1rem; color: #cbd5e1; }
+
+    /* Robot Helper Promo */
+    .robot-promo {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        color: white;
+    }
+    .robot-promo-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+    .robot-promo-text h3 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .robot-promo-text p { opacity: 0.8; font-size: 0.95rem; }
+    .robot-promo-btn {
+        background: white;
+        color: #6366f1;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 700;
+        font-family: 'Nunito', sans-serif;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: all 0.3s;
+    }
+    .robot-promo-btn:hover { transform: translateY(-2px); }
+
+    /* Highlight search matches */
+    .highlight {
+        background: #fef08a;
+        padding: 0 2px;
+        border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+        .faq-hero h1 { font-size: 1.8rem; }
+        .faq-question-item { flex-wrap: wrap; }
+        .faq-ask-btn { margin-left: 48px; margin-top: 0.5rem; }
+        .robot-promo { flex-direction: column; text-align: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="faq-container">
+    <!-- Hero -->
+    <div class="faq-hero">
+        <h1><i class="fas fa-question-circle"></i> Жиі қойылатын сұрақтар</h1>
+        <p>Blender 3D бойынша 105 сұрақ және жауап. Сұрағыңызды табыңыз немесе Робот Көмекшіден сұраңыз!</p>
+        <div class="faq-count">
+            <i class="fas fa-list-ol"></i> 7 бөлім • 105 сұрақ
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="faq-search-wrapper">
+        <i class="fas fa-search faq-search-icon"></i>
+        <input type="text" class="faq-search-input" id="faqSearch" placeholder="Сұрақты іздеу... (мысалы: Edit Mode, Render, Материал)" oninput="searchFAQ()">
+        <button class="faq-search-clear" id="searchClear" onclick="clearSearch()">
+            <i class="fas fa-times"></i> Тазалау
+        </button>
+    </div>
+
+    <!-- FAQ Sections -->
+    <div id="faqSections">
+
+        <div class="faq-section" data-section="1">
+            <div class="faq-section-header" onclick="toggleSection(1)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #6366f120, #6366f140); color: #6366f1;">
+                    🖥️
+                </div>
+                <div class="faq-section-title">§ 1. 1. Интерфейс және негізгі құралдар</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-1">
+
+                <div class="faq-question-item" data-question="blender бағдарламасының интерфейсі қандай бөлімдерден тұрады?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">Blender бағдарламасының интерфейсі қандай бөлімдерден тұрады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender бағдарламасының интерфейсі қандай бөлімдерден тұрады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="3d viewport терезесінің қызметі қандай?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">3D Viewport терезесінің қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('3D Viewport терезесінің қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="object mode қандай жұмыстарға арналған?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Object Mode қандай жұмыстарға арналған?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Object Mode қандай жұмыстарға арналған?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="edit mode режимі не үшін қолданылады?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Edit Mode режимі не үшін қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Edit Mode режимі не үшін қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="blender-де объектіні қалай таңдаймыз?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Blender-де объектіні қалай таңдаймыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender-де объектіні қалай таңдаймыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="g пернесі қандай әрекет орындайды?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">G пернесі қандай әрекет орындайды?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('G пернесі қандай әрекет орындайды?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="r пернесінің қызметі қандай?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">R пернесінің қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('R пернесінің қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="s пернесі не үшін қажет?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">S пернесі не үшін қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('S пернесі не үшін қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="blender бағдарламасында жаңа объектіні қалай қосамыз?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">Blender бағдарламасында жаңа объектіні қалай қосамыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender бағдарламасында жаңа объектіні қалай қосамыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="3d курсор дегеніміз не?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">3D курсор дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('3D курсор дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="коллекция (collection) қандай қызмет атқарады?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Коллекция (Collection) қандай қызмет атқарады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Коллекция (Collection) қандай қызмет атқарады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="viewport-та масштабты қалай өзгертеміз?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Viewport-та масштабты қалай өзгертеміз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Viewport-та масштабты қалай өзгертеміз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="blender-де файлды сақтау қалай орындалады?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">Blender-де файлды сақтау қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender-де файлды сақтау қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="undo және redo командалары қалай іске асады?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Undo және Redo командалары қалай іске асады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Undo және Redo командалары қалай іске асады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="blender интерфейсінің тілін қалай өзгертуге болады?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Blender интерфейсінің тілін қалай өзгертуге болады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender интерфейсінің тілін қалай өзгертуге болады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="faq-section" data-section="2">
+            <div class="faq-section-header" onclick="toggleSection(2)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #10b98120, #10b98140); color: #10b981;">
+                    🔧
+                </div>
+                <div class="faq-section-title">§ 2. 2. Модель құру: бөлшектерді біріктіру және тегістеу</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-2">
+
+                <div class="faq-question-item" data-question="mesh объектісі дегеніміз не?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">Mesh объектісі дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Mesh объектісі дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="vertex ұғымы нені білдіреді?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">Vertex ұғымы нені білдіреді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Vertex ұғымы нені білдіреді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="edge дегеніміз не?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Edge дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Edge дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="face элементінің қызметі қандай?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Face элементінің қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Face элементінің қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="extrude құралы не үшін қолданылады?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Extrude құралы не үшін қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Extrude құралы не үшін қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="loop cut операциясы қалай орындалады?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">Loop Cut операциясы қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Loop Cut операциясы қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="bevel құралы қандай нәтиже береді?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">Bevel құралы қандай нәтиже береді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Bevel құралы қандай нәтиже береді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="blender-де бірнеше объектіні қалай біріктіреміз?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">Blender-де бірнеше объектіні қалай біріктіреміз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender-де бірнеше объектіні қалай біріктіреміз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="boolean модификаторы қандай қызмет атқарады?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">Boolean модификаторы қандай қызмет атқарады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Boolean модификаторы қандай қызмет атқарады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="subdivision surface не үшін қажет?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">Subdivision Surface не үшін қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Subdivision Surface не үшін қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="объектіні тегістеу қалай орындалады?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Объектіні тегістеу қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Объектіні тегістеу қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="shade smooth командасының қызметі қандай?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Shade Smooth командасының қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Shade Smooth командасының қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="knife құралы қандай жағдайда қолданылады?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">Knife құралы қандай жағдайда қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Knife құралы қандай жағдайда қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="mirror модификаторы не үшін қажет?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Mirror модификаторы не үшін қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Mirror модификаторы не үшін қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="модель құру кезінде пропорцияны сақтау неге маңызды?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Модель құру кезінде пропорцияны сақтау неге маңызды?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Модель құру кезінде пропорцияны сақтау неге маңызды?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="faq-section" data-section="3">
+            <div class="faq-section-header" onclick="toggleSection(3)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #f59e0b20, #f59e0b40); color: #f59e0b;">
+                    🎨
+                </div>
+                <div class="faq-section-title">§ 3. 3. Материалдар және текстуралар</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-3">
+
+                <div class="faq-question-item" data-question="материал дегеніміз не?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">Материал дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Материал дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="текстураның қызметі қандай?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">Текстураның қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Текстураның қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="blender-де материал қалай қосылады?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Blender-де материал қалай қосылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender-де материал қалай қосылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="base color параметрі не үшін қажет?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Base Color параметрі не үшін қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Base Color параметрі не үшін қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="metallic параметрі қандай әсер береді?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Metallic параметрі қандай әсер береді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Metallic параметрі қандай әсер береді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="roughness параметрі нені өзгертеді?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">Roughness параметрі нені өзгертеді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Roughness параметрі нені өзгертеді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="shader editor терезесі не үшін қолданылады?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">Shader Editor терезесі не үшін қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Shader Editor терезесі не үшін қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="image texture қалай қосылады?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">Image Texture қалай қосылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Image Texture қалай қосылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="uv mapping дегеніміз не?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">UV Mapping дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('UV Mapping дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="текстура координаттары қалай реттеледі?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">Текстура координаттары қалай реттеледі?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Текстура координаттары қалай реттеледі?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="нормаль картасының қызметі қандай?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Нормаль картасының қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Нормаль картасының қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="материалды бірнеше объектіге қалай қолданамыз?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Материалды бірнеше объектіге қалай қолданамыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Материалды бірнеше объектіге қалай қолданамыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="procedural texture дегеніміз не?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">Procedural Texture дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Procedural Texture дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="transparency параметрі қалай жұмыс істейді?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Transparency параметрі қалай жұмыс істейді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Transparency параметрі қалай жұмыс істейді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="материал сапасын арттыру үшін қандай тәсілдер қолданылады?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Материал сапасын арттыру үшін қандай тәсілдер қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Материал сапасын арттыру үшін қандай тәсілдер қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="faq-section" data-section="4">
+            <div class="faq-section-header" onclick="toggleSection(4)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #f9731620, #f9731640); color: #f97316;">
+                    💡
+                </div>
+                <div class="faq-section-title">§ 4. 4. Жарық және камера</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-4">
+
+                <div class="faq-question-item" data-question="blender-де жарықтың қандай түрлері бар?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">Blender-де жарықтың қандай түрлері бар?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender-де жарықтың қандай түрлері бар?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="point light қандай қызмет атқарады?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">Point Light қандай қызмет атқарады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Point Light қандай қызмет атқарады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="sun light не үшін қолданылады?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Sun Light не үшін қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Sun Light не үшін қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="area light ерекшелігі қандай?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Area Light ерекшелігі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Area Light ерекшелігі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="spot light қандай жағдайда пайдаланылады?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Spot Light қандай жағдайда пайдаланылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Spot Light қандай жағдайда пайдаланылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жарықтың қуатын қалай өзгертеміз?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">Жарықтың қуатын қалай өзгертеміз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жарықтың қуатын қалай өзгертеміз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="көлеңкені баптау қалай орындалады?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">Көлеңкені баптау қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Көлеңкені баптау қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="hdri дегеніміз не?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">HDRI дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('HDRI дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="камераны сахнаға қалай орналастырамыз?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">Камераны сахнаға қалай орналастырамыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Камераны сахнаға қалай орналастырамыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="камера бұрышын өзгерту қалай орындалады?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">Камера бұрышын өзгерту қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Камера бұрышын өзгерту қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="focal length параметрі неге әсер етеді?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Focal Length параметрі неге әсер етеді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Focal Length параметрі неге әсер етеді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="depth of field дегеніміз не?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Depth of Field дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Depth of Field дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="камераны объектіге бағыттау қалай іске асады?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">Камераны объектіге бағыттау қалай іске асады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Камераны объектіге бағыттау қалай іске асады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="композиция құруда камераның рөлі қандай?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Композиция құруда камераның рөлі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Композиция құруда камераның рөлі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жарық пен камераны дұрыс орнату не үшін маңызды?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Жарық пен камераны дұрыс орнату не үшін маңызды?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жарық пен камераны дұрыс орнату не үшін маңызды?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="faq-section" data-section="5">
+            <div class="faq-section-header" onclick="toggleSection(5)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #ec489920, #ec489940); color: #ec4899;">
+                    📸
+                </div>
+                <div class="faq-section-title">§ 5. 5. Рендеринг. Фотореалистік визуализациялау</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-5">
+
+                <div class="faq-question-item" data-question="рендеринг дегеніміз не?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">Рендеринг дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Рендеринг дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="eevee мен cycles айырмашылығы қандай?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">Eevee мен Cycles айырмашылығы қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Eevee мен Cycles айырмашылығы қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="render engine қалай таңдалады?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Render Engine қалай таңдалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Render Engine қалай таңдалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="render resolution параметрі неге әсер етеді?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Render Resolution параметрі неге әсер етеді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Render Resolution параметрі неге әсер етеді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="samples параметрі қандай қызмет атқарады?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Samples параметрі қандай қызмет атқарады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Samples параметрі қандай қызмет атқарады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="render нәтижесін қалай сақтаймыз?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">Render нәтижесін қалай сақтаймыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Render нәтижесін қалай сақтаймыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="noise дегеніміз не?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">Noise дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Noise дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="denoise функциясы қалай жұмыс істейді?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">Denoise функциясы қалай жұмыс істейді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Denoise функциясы қалай жұмыс істейді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="фотореалистік визуализация дегеніміз не?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">Фотореалистік визуализация дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Фотореалистік визуализация дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="render layers қандай қызмет атқарады?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">Render Layers қандай қызмет атқарады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Render Layers қандай қызмет атқарады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="environment texture не үшін қажет?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Environment Texture не үшін қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Environment Texture не үшін қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="render уақытын қалай азайтуға болады?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Render уақытын қалай азайтуға болады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Render уақытын қалай азайтуға болады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="gpu рендерингінің артықшылығы қандай?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">GPU рендерингінің артықшылығы қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('GPU рендерингінің артықшылығы қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="композициялау (compositing) не үшін қолданылады?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Композициялау (Compositing) не үшін қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Композициялау (Compositing) не үшін қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="сапалы рендер жасау үшін қандай параметрлер маңызды?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Сапалы рендер жасау үшін қандай параметрлер маңызды?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Сапалы рендер жасау үшін қандай параметрлер маңызды?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="faq-section" data-section="6">
+            <div class="faq-section-header" onclick="toggleSection(6)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #8b5cf620, #8b5cf640); color: #8b5cf6;">
+                    🎬
+                </div>
+                <div class="faq-section-title">§ 6. 6. Анимациямен жұмыс</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-6">
+
+                <div class="faq-question-item" data-question="blender-де анимация дегеніміз не?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">Blender-де анимация дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Blender-де анимация дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="keyframe қалай қойылады?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">Keyframe қалай қойылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Keyframe қалай қойылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="timeline терезесінің қызметі қандай?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Timeline терезесінің қызметі қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Timeline терезесінің қызметі қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="frame ұғымы нені білдіреді?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Frame ұғымы нені білдіреді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Frame ұғымы нені білдіреді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="object animation қалай жасалады?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Object Animation қалай жасалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Object Animation қалай жасалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="dope sheet не үшін қолданылады?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">Dope Sheet не үшін қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Dope Sheet не үшін қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="graph editor қандай мүмкіндік береді?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">Graph Editor қандай мүмкіндік береді?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Graph Editor қандай мүмкіндік береді?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="анимация жылдамдығын қалай өзгертеміз?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">Анимация жылдамдығын қалай өзгертеміз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Анимация жылдамдығын қалай өзгертеміз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="rotation анимациясы қалай орындалады?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">Rotation анимациясы қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Rotation анимациясы қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="scale анимациясын қалай құрамыз?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">Scale анимациясын қалай құрамыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Scale анимациясын қалай құрамыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="path animation дегеніміз не?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Path Animation дегеніміз не?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Path Animation дегеніміз не?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="камера анимациясы қалай жасалады?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Камера анимациясы қалай жасалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Камера анимациясы қалай жасалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="interpolation түрлері қандай?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">Interpolation түрлері қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Interpolation түрлері қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="анимацияны видео ретінде қалай сақтаймыз?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Анимацияны видео ретінде қалай сақтаймыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Анимацияны видео ретінде қалай сақтаймыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="сапалы анимация жасау үшін нені ескеру қажет?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Сапалы анимация жасау үшін нені ескеру қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Сапалы анимация жасау үшін нені ескеру қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="faq-section" data-section="7">
+            <div class="faq-section-header" onclick="toggleSection(7)">
+                <div class="faq-section-icon" style="background: linear-gradient(135deg, #06b6d420, #06b6d440); color: #06b6d4;">
+                    🏗️
+                </div>
+                <div class="faq-section-title">§ 7. 7. Менің 3D жобам</div>
+                <div class="faq-section-count">15 сұрақ</div>
+                <div class="faq-section-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="faq-questions" id="section-7">
+
+                <div class="faq-question-item" data-question="3d жобаны жоспарлау қалай жүзеге асады?">
+                    <div class="faq-question-num">1</div>
+                    <div class="faq-question-text">3D жобаны жоспарлау қалай жүзеге асады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('3D жобаны жоспарлау қалай жүзеге асады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жоба тақырыбын таңдау неге маңызды?">
+                    <div class="faq-question-num">2</div>
+                    <div class="faq-question-text">Жоба тақырыбын таңдау неге маңызды?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жоба тақырыбын таңдау неге маңызды?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="reference материалдар не үшін қажет?">
+                    <div class="faq-question-num">3</div>
+                    <div class="faq-question-text">Reference материалдар не үшін қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Reference материалдар не үшін қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жобаның негізгі кезеңдері қандай?">
+                    <div class="faq-question-num">4</div>
+                    <div class="faq-question-text">Жобаның негізгі кезеңдері қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жобаның негізгі кезеңдері қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="модельдеу кезінде қандай құралдар жиі қолданылады?">
+                    <div class="faq-question-num">5</div>
+                    <div class="faq-question-text">Модельдеу кезінде қандай құралдар жиі қолданылады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Модельдеу кезінде қандай құралдар жиі қолданылады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жобаға материал таңдау қалай жүргізіледі?">
+                    <div class="faq-question-num">6</div>
+                    <div class="faq-question-text">Жобаға материал таңдау қалай жүргізіледі?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жобаға материал таңдау қалай жүргізіледі?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жарық орнатудың маңызы қандай?">
+                    <div class="faq-question-num">7</div>
+                    <div class="faq-question-text">Жарық орнатудың маңызы қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жарық орнатудың маңызы қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="камера бұрышын қалай дұрыс таңдаймыз?">
+                    <div class="faq-question-num">8</div>
+                    <div class="faq-question-text">Камера бұрышын қалай дұрыс таңдаймыз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Камера бұрышын қалай дұрыс таңдаймыз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жобаны рендерге дайындау кезеңдері қандай?">
+                    <div class="faq-question-num">9</div>
+                    <div class="faq-question-text">Жобаны рендерге дайындау кезеңдері қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жобаны рендерге дайындау кезеңдері қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="презентация үшін рендерді қалай безендіреміз?">
+                    <div class="faq-question-num">10</div>
+                    <div class="faq-question-text">Презентация үшін рендерді қалай безендіреміз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Презентация үшін рендерді қалай безендіреміз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="анимацияны жобаға қосудың артықшылығы қандай?">
+                    <div class="faq-question-num">11</div>
+                    <div class="faq-question-text">Анимацияны жобаға қосудың артықшылығы қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Анимацияны жобаға қосудың артықшылығы қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жоба файлын экспорттау қалай орындалады?">
+                    <div class="faq-question-num">12</div>
+                    <div class="faq-question-text">Жоба файлын экспорттау қалай орындалады?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жоба файлын экспорттау қалай орындалады?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="3d жобаны қорғау кезінде нені түсіндіру қажет?">
+                    <div class="faq-question-num">13</div>
+                    <div class="faq-question-text">3D жобаны қорғау кезінде нені түсіндіру қажет?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('3D жобаны қорғау кезінде нені түсіндіру қажет?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="жобада кездесетін қателерді қалай түзетеміз?">
+                    <div class="faq-question-num">14</div>
+                    <div class="faq-question-text">Жобада кездесетін қателерді қалай түзетеміз?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Жобада кездесетін қателерді қалай түзетеміз?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+                <div class="faq-question-item" data-question="дайын 3d жобаны бағалау критерийлері қандай?">
+                    <div class="faq-question-num">15</div>
+                    <div class="faq-question-text">Дайын 3D жобаны бағалау критерийлері қандай?</div>
+                    <button class="faq-ask-btn" onclick="askRobot('Дайын 3D жобаны бағалау критерийлері қандай?')">
+                        <i class="fas fa-robot"></i> Роботқа сұрау
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- No Results -->
+    <div class="faq-no-results" id="noResults">
+        <i class="fas fa-search"></i>
+        <h3>Сұрақ табылмады</h3>
+        <p>Басқа сөздермен іздеп көріңіз немесе Робот Көмекшіден сұраңыз!</p>
+    </div>
+
+    <!-- Robot Promo -->
+    <div class="robot-promo">
+        <div class="robot-promo-icon">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="robot-promo-text">
+            <h3>🤖 Робот Көмекші</h3>
+            <p>Барлық 105 сұраққа дайын жауаптары бар! Сұрағыңызды төмен оң жақтағы чатқа жазыңыз, Робот Көмекші дереу жауап береді.</p>
+            <button class="robot-promo-btn" onclick="toggleChat()">
+                <i class="fas fa-comments"></i> Роботпен сөйлесу
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSection(num) {
+    const section = document.querySelector(`[data-section="${num}"]`);
+    section.classList.toggle('open');
+}
+
+function searchFAQ() {
+    const query = document.getElementById('faqSearch').value.toLowerCase().trim();
+    const clearBtn = document.getElementById('searchClear');
+    const noResults = document.getElementById('noResults');
+    const sections = document.querySelectorAll('.faq-section');
+
+    if (query) {
+        clearBtn.classList.add('visible');
+    } else {
+        clearBtn.classList.remove('visible');
+        noResults.classList.remove('visible');
+        sections.forEach(sec => {
+            sec.style.display = '';
+            sec.classList.remove('open');
+            // Remove highlights
+            sec.querySelectorAll('.highlight').forEach(el => {
+                el.outerHTML = el.innerHTML;
+            });
+        });
+        return;
+    }
+
+    let hasResults = false;
+
+    sections.forEach(sec => {
+        const questions = sec.querySelectorAll('.faq-question-item');
+        let sectionHasMatch = false;
+
+        questions.forEach(q => {
+            const text = q.getAttribute('data-question');
+            const textEl = q.querySelector('.faq-question-text');
+
+            if (text.includes(query)) {
+                q.style.display = '';
+                sectionHasMatch = true;
+                hasResults = true;
+
+                // Highlight matching text
+                const originalText = textEl.textContent;
+                const regex = new RegExp(`(${query})`, 'gi');
+                textEl.innerHTML = originalText.replace(regex, '<span class="highlight">$1</span>');
+            } else {
+                q.style.display = 'none';
+                // Remove highlights
+                textEl.innerHTML = textEl.textContent;
+            }
+        });
+
+        if (sectionHasMatch) {
+            sec.style.display = '';
+            sec.classList.add('open');
+        } else {
+            sec.style.display = 'none';
+        }
+    });
+
+    noResults.classList.toggle('visible', !hasResults);
+}
+
+function clearSearch() {
+    document.getElementById('faqSearch').value = '';
+    searchFAQ();
+}
+
+function askRobot(question) {
+    // Open chat panel
+    const chatPanel = document.getElementById('chatPanel');
+    chatPanel.classList.add('active');
+
+    // Set question in input and send
+    const input = document.getElementById('chatInput');
+    input.value = question;
+    input.focus();
+
+    // Auto send after small delay
+    setTimeout(() => {
+        sendMessage();
+    }, 300);
+}
+
+// Open first section by default
+document.addEventListener('DOMContentLoaded', function() {
+    toggleSection(1);
+});
+</script>
+{% endblock %}

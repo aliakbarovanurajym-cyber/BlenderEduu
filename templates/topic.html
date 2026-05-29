@@ -1,0 +1,870 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .topic-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    /* Hero */
+    .topic-hero {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 25px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .topic-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%; right: -20%;
+        width: 400px; height: 400px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+    .topic-hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; position: relative; }
+    .topic-hero p { font-size: 1.2rem; opacity: 0.9; position: relative; }
+    .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; color: white; text-decoration: none; margin-bottom: 1rem; font-weight: 600; opacity: 0.8; transition: opacity 0.3s; }
+    .back-btn:hover { opacity: 1; }
+
+    /* Content Grid */
+    .main-content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        align-items: start;
+    }
+    @media (max-width: 768px) { .main-content-grid { grid-template-columns: 1fr; } }
+
+    .content-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    .content-card h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: #0f172a; }
+    .theory-text { line-height: 1.8; color: #333; font-size: 1.05rem; }
+    .theory-text p { margin-bottom: 1rem; }
+
+    .theory-image {
+        width: 100%;
+        border-radius: 15px;
+        margin-top: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Видео */
+    .video-wrapper { background: #f0f2f5; border-radius: 15px; overflow: hidden; }
+    .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    .video-info { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .video-title { font-weight: 600; color: #0f172a; }
+    .video-duration { background: #6366f1; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; }
+
+    /* ВИДЕО КАРУСЕЛІ */
+    .video-carousel {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    .video-carousel h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: #0f172a; }
+
+    .carousel-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+    }
+    .carousel-track {
+        display: flex;
+        transition: transform 0.5s ease;
+    }
+    .carousel-slide {
+        min-width: 100%;
+        flex-shrink: 0;
+    }
+    .carousel-slide .video-wrapper {
+        background: #f0f2f5;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .carousel-slide .video-info {
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .carousel-slide .video-title { font-weight: 600; color: #0f172a; }
+    .carousel-slide .video-duration { background: #6366f1; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; }
+
+    .carousel-nav {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .carousel-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: none;
+        background: #cbd5e1;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .carousel-dot.active { background: #6366f1; }
+    .carousel-dot:hover { background: #6366f1; }
+
+    .carousel-arrows {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    .carousel-arrow {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: transform 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .carousel-arrow:hover { transform: scale(1.1); }
+    .carousel-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Практикалық жобалар тізімі */
+    .projects-section { margin-bottom: 2rem; }
+    .projects-header {
+        background: linear-gradient(135deg, #10b981, #34d399);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .projects-header h2 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .projects-header i { font-size: 2rem; }
+
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+
+    .project-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border-left: 5px solid #667eea;
+        transition: all 0.3s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    .project-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.12); }
+    .project-card.completed { border-left-color: #10b981; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); }
+
+    .project-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border-radius: 50%;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+    .project-number.done { background: linear-gradient(135deg, #10b981, #34d399); }
+
+    .project-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; color: #0f172a; }
+    .project-desc { color: #666; font-size: 0.95rem; margin-bottom: 1rem; }
+
+    .project-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .status-pending { background: #ffedd5; color: #c2410c; }
+    .status-done { background: #d1fae5; color: #065f46; }
+    .status-graded { background: #e0e7ff; color: #6366f1; }
+
+    /* Интерактивті тапсырмалар */
+    .tasks-section { margin-top: 2rem; }
+    .tasks-title { font-size: 2rem; font-weight: 800; margin-bottom: 2rem; text-align: center; color: #0f172a; }
+
+    .task-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+    .task-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+    .task-card.completed { border-color: #10b981; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); }
+
+    .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .task-number { display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50%; font-weight: 700; margin-right: 0.5rem; }
+    .task-type-badge { padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+    .badge-mc { background: #e0e7ff; color: #6366f1; }
+    .badge-fill { background: #f3e8ff; color: #7c3aed; }
+    .badge-match { background: #f0fdf4; color: #388e3c; }
+    .task-points { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; }
+
+    .task-question { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; color: #0f172a; }
+    .options-list { display: flex; flex-direction: column; gap: 0.8rem; }
+    .option-item { padding: 1rem 1.5rem; background: #f8fafc; border: 2px solid transparent; border-radius: 15px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 1rem; }
+    .option-item:hover { border-color: #6366f1; }
+    .option-item.selected { border-color: #6366f1; background: #e8eaf6; }
+    .option-radio { width: 24px; height: 24px; border: 2px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .option-item.selected .option-radio { border-color: #6366f1; background: #6366f1; }
+
+    .fill-input { width: 100%; padding: 1rem 1.5rem; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1rem; font-family: 'Nunito', sans-serif; }
+    .fill-input:focus { outline: none; border-color: #6366f1; }
+
+    .matching-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .matching-item { background: #f8fafc; padding: 1rem 1.5rem; border-radius: 15px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; text-align: center; font-weight: 600; }
+    .matching-item:hover { border-color: #6366f1; }
+    .matching-item.matched { border-color: #10b981; background: #f0fdf4; }
+    .matching-item.selected { border-color: #6366f1; background: #e8eaf6; }
+
+    .submit-btn { margin-top: 1.5rem; width: 100%; justify-content: center; padding: 1rem; font-size: 1.1rem; }
+
+    .result-message { padding: 1.2rem; border-radius: 15px; margin-top: 1rem; font-weight: 600; text-align: center; display: none; }
+    .result-success { background: #d1fae5; color: #065f46; }
+    .result-error { background: #fee2e2; color: #991b1b; }
+
+    .completed-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #10b981, #34d399); color: white; padding: 0.8rem 1.5rem; border-radius: 25px; font-weight: 700; }
+
+    .hint-box { background: #ffedd5; border-left: 4px solid #ff9800; padding: 1rem 1.5rem; border-radius: 0 15px 15px 0; margin-bottom: 1rem; color: #c2410c; }
+
+    /* Басты бетке оралу */
+    .back-home-section {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    .back-home-btn {
+        background: white;
+        color: #6366f1;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+    .back-home-btn:hover { transform: scale(1.05); }
+
+    /* Locked */
+    .locked-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    }
+    .locked-content {
+        background: white;
+        padding: 3rem;
+        border-radius: 25px;
+        text-align: center;
+        max-width: 500px;
+    }
+    .locked-content i { font-size: 4rem; color: #6366f1; margin-bottom: 1rem; }
+    .locked-content h2 { font-size: 1.8rem; margin-bottom: 1rem; color: #0f172a; }
+    .locked-content p { color: #666; margin-bottom: 2rem; }
+    .locked-btns { display: flex; gap: 1rem; justify-content: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not session.get('user_type') == 'student' %}
+<div class="locked-overlay">
+    <div class="locked-content">
+        <i class="fas fa-lock"></i>
+        <h2>Тек оқушыларға арналған</h2>
+        <p>Бұл тақырыптар мен тапсырмаларды көру үшін оқушы ретінде кіріңіз.</p>
+        <div class="locked-btns">
+            <a href="/login_student" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Оқушы кіруі
+            </a>
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Басты бет
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+
+<div class="topic-container">
+    <div class="topic-hero">
+        <a href="/student_dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Оқушы панелі</a>
+        <h1>{{ topic.title }}</h1>
+        <p>{{ topic.description }}</p>
+    </div>
+
+    <!-- Теория + Видео / Видео Карусел -->
+    <div class="main-content-grid">
+        <div class="content-card">
+            <h2><i class="fas fa-book-open"></i> Теория</h2>
+            <div class="theory-text">
+                <p>{{ topic.theory }}</p>
+            </div>
+            <!-- СУРЕТ ТЕК 1-ШІ ПАРАГРАФТА -->
+            {% if topic.id == 1 %}
+            <img src="{{ url_for('static', filename='1.png') }}" alt="Теория суреті" class="theory-image" onerror="this.style.display='none'">
+            {% endif %}
+        </div>
+
+        {% if topic.id == 2 %}
+        <!-- 2-ші параграф - 3 видео каруселі: 2,3,4 практикалық жобалар -->
+        <div class="video-carousel">
+            <h2><i class="fas fa-video"></i> Практикалық жоба видеолары</h2>
+            <div class="carousel-container">
+                <div class="carousel-track" id="carousel-track-2">
+                    <div class="carousel-slide">
+                        <div class="video-wrapper">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/zgoEzNNP_Iw"
+                                        title="Практикалық жоба 2"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="video-info">
+                                <span class="video-title">Практикалық жоба 2</span>
+                                <span class="video-duration"><i class="fas fa-clock"></i> YouTube</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="video-wrapper">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/vUHGGM-TdPI"
+                                        title="Практикалық жоба 3"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="video-info">
+                                <span class="video-title">Практикалық жоба 3</span>
+                                <span class="video-duration"><i class="fas fa-clock"></i> YouTube</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="video-wrapper">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/6BDdcsqGoJw"
+                                        title="Практикалық жоба 4"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="video-info">
+                                <span class="video-title">Практикалық жоба 4</span>
+                                <span class="video-duration"><i class="fas fa-clock"></i> YouTube</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-arrows">
+                <button class="carousel-arrow" onclick="moveCarousel(2, -1)"><i class="fas fa-chevron-left"></i></button>
+                <div class="carousel-nav" id="carousel-dots-2">
+                    <button class="carousel-dot active" onclick="goToSlide(2, 0)"></button>
+                    <button class="carousel-dot" onclick="goToSlide(2, 1)"></button>
+                    <button class="carousel-dot" onclick="goToSlide(2, 2)"></button>
+                </div>
+                <button class="carousel-arrow" onclick="moveCarousel(2, 1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        {% elif topic.id == 7 %}
+        <!-- 7-ші параграф - 2 видео каруселі: 9,10 практикалық жобалар -->
+        <div class="video-carousel">
+            <h2><i class="fas fa-video"></i> Практикалық жоба видеолары</h2>
+            <div class="carousel-container">
+                <div class="carousel-track" id="carousel-track-7">
+                    <div class="carousel-slide">
+                        <div class="video-wrapper">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/mZLbnj7CXec"
+                                        title="Практикалық жоба 9"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="video-info">
+                                <span class="video-title">Практикалық жоба 9</span>
+                                <span class="video-duration"><i class="fas fa-clock"></i> YouTube</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="video-wrapper">
+                            <div class="video-container">
+                                <iframe src="https://www.youtube.com/embed/KXEPyE9HUUU"
+                                        title="Практикалық жоба 10"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="video-info">
+                                <span class="video-title">Практикалық жоба 10</span>
+                                <span class="video-duration"><i class="fas fa-clock"></i> YouTube</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-arrows">
+                <button class="carousel-arrow" onclick="moveCarousel(7, -1)"><i class="fas fa-chevron-left"></i></button>
+                <div class="carousel-nav" id="carousel-dots-7">
+                    <button class="carousel-dot active" onclick="goToSlide(7, 0)"></button>
+                    <button class="carousel-dot" onclick="goToSlide(7, 1)"></button>
+                </div>
+                <button class="carousel-arrow" onclick="moveCarousel(7, 1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        {% else %}
+        <!-- БАСҚА ПАРАГРАФТАР - ҚАЛПЫНДАҒЫ БІР ВИДЕО -->
+<div class="content-card">
+            <h2><i class="fas fa-video"></i> Видео сабақ</h2>
+            <div class="video-wrapper">
+                <div class="video-container">
+                    {% if topic.id == 1 %}
+                    <iframe src="https://www.youtube.com/embed/GVy2Gpi81rU"
+                            title="Практикалық жоба 1"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                    {% elif topic.id == 3 %}
+                    <iframe src="https://www.youtube.com/embed/Q6jHF9vRfnQ"
+                            title="Практикалық жоба 5"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                    {% elif topic.id == 4 %}
+                    <iframe src="https://www.youtube.com/embed/0K4h5ECs8xQ"
+                            title="Практикалық жоба 6"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                    {% elif topic.id == 5 %}
+                    <iframe src="https://www.youtube.com/embed/lAjVHGWK3ss"
+                            title="Практикалық жоба 7"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                    {% elif topic.id == 6 %}
+                    <iframe src="https://www.youtube.com/embed/Fw__7hi_J-s"
+                            title="Практикалық жоба 8"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                    {% else %}
+                    <iframe src="https://www.youtube.com/embed/{{ topic.video_url.split('/')[-1].split('?')[0] }}"
+                            title="YouTube video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                    {% endif %}
+                </div>
+                <div class="video-info">
+                    <span class="video-title">{{ topic.title }}</span>
+                    <span class="video-duration"><i class="fas fa-clock"></i> YouTube</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Практикалық жобалар -->
+    <div class="projects-section">
+        <div class="projects-header">
+            <i class="fas fa-tools"></i>
+            <h2>Практикалық жобалар</h2>
+        </div>
+
+        <div class="projects-grid">
+            {% for project in projects %}
+            <a href="/project/{{ project.id }}" class="project-card {% if project_submissions.get(project.id) and project_submissions[project.id].status == 'graded' %}completed{% endif %}">
+                <div class="project-number {% if project_submissions.get(project.id) and project_submissions[project.id].status == 'graded' %}done{% endif %}">
+                    {% if project_submissions.get(project.id) and project_submissions[project.id].status == 'graded' %}
+                        <i class="fas fa-check"></i>
+                    {% else %}
+                        {{ project.project_num }}
+                    {% endif %}
+                </div>
+                <div class="project-title">{{ project.title }}</div>
+                <div class="project-desc">{{ project.description[:100] }}...</div>
+
+                {% if project_submissions.get(project.id) %}
+                    {% if project_submissions[project.id].status == 'graded' %}
+                    <span class="project-status status-done">
+                        <i class="fas fa-check-circle"></i> Бағаланды: {{ project_submissions[project.id].teacher_score }}/10
+                    </span>
+                    {% else %}
+                    <span class="project-status status-pending">
+                        <i class="fas fa-clock"></i> Тексеруде
+                    </span>
+                    {% endif %}
+                {% else %}
+                <span class="project-status status-pending">
+                    <i class="fas fa-play"></i> Орындау
+                </span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Интерактивті тапсырмалар -->
+    <div class="tasks-section">
+        <h2 class="tasks-title"><i class="fas fa-tasks" style="color: #6366f1;"></i> Интерактивті тапсырмалар</h2>
+
+        {% for task in tasks %}
+        <div class="task-card {% if task_progress.get(task.id) and task_progress[task.id].completed %}completed{% endif %}" id="task-{{ task.id }}">
+            <div class="task-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="task-number">{{ loop.index }}</span>
+                    <span class="task-type-badge
+                        {% if task.task_type == 'multiple_choice' %}badge-mc{% endif %}
+                        {% if task.task_type == 'fill_blank' %}badge-fill{% endif %}
+                        {% if task.task_type == 'matching' %}badge-match{% endif %}">
+                        {% if task.task_type == 'multiple_choice' %}Көп нұсқалы{% endif %}
+                        {% if task.task_type == 'fill_blank' %}Бос орын{% endif %}
+                        {% if task.task_type == 'matching' %}Сәйкестендіру{% endif %}
+                    </span>
+                </div>
+                <span class="task-points"><i class="fas fa-star"></i> {{ task.points }} XP</span>
+            </div>
+
+            {% if task_progress.get(task.id) and task_progress[task.id].completed %}
+            <div style="text-align: center; padding: 2rem;">
+                <div class="completed-badge">
+                    <i class="fas fa-check-circle"></i> Орындалды! (+{{ task_progress[task.id].score }} XP)
+                </div>
+            </div>
+            {% else %}
+
+            <div class="task-question">{{ task.question }}</div>
+
+            {% if task.task_type == 'multiple_choice' %}
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Дұрыс жауапты таңдаңыз</div>
+            <div class="options-list" id="options-{{ task.id }}">
+                {% for option in task.options.split('|') %}
+                <div class="option-item" onclick="selectOption({{ task.id }}, '{{ option }}', this)">
+                    <div class="option-radio"><i class="fas fa-check" style="color: white; font-size: 0.7rem; display: none;"></i></div>
+                    <span>{{ option }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="btn btn-primary submit-btn" onclick="submitTask({{ task.id }})">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+
+            {% elif task.task_type == 'fill_blank' %}
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Бос орынға дұрыс сөзді жазыңыз</div>
+            <input type="text" class="fill-input" id="answer-{{ task.id }}" placeholder="Жауапты осы жерге жазыңыз...">
+            <button class="btn btn-primary submit-btn" onclick="submitTask({{ task.id }})">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+
+            {% elif task.task_type == 'matching' %}
+            <div class="hint-box"><i class="fas fa-lightbulb"></i> Сол жақтағы сұрақты басыңыз, содан кейін оң жақтағы дұрыс жауапты басыңыз</div>
+            <div class="matching-wrapper" id="matching-{{ task.id }}">
+                <div class="matching-columns">
+                    <!-- Сол жақ - Сұрақтар -->
+                    <div class="matching-column keys-column">
+                        <div class="matching-column-title keys-title">❓ Сұрақтар</div>
+                        {% for pair in task.options.split('|') %}
+                        {% set parts = pair.split(':') %}
+                        <div class="matching-item" data-key="{{ parts[0] }}" data-correct="{{ parts[1] }}" onclick="selectMatchKey({{ task.id }}, '{{ parts[0] }}', '{{ parts[1] }}', this)">
+                            <strong>{{ parts[0] }}</strong>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <!-- Оң жақ - Жауаптар -->
+                    <div class="matching-column values-column">
+                        <div class="matching-column-title values-title">✅ Жауаптар</div>
+                        {% set all_pairs = task.options.split('|') %}
+                        {% for pair in all_pairs %}
+                        {% set parts = pair.split(':') %}
+                        <div class="matching-item" data-value="{{ parts[1] }}" onclick="selectMatchValue({{ task.id }}, '{{ parts[1] }}', this)">
+                            {{ parts[1] }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary submit-btn" onclick="submitTask({{ task.id }})">
+                <i class="fas fa-paper-plane"></i> Жауапты жіберу
+            </button>
+            {% endif %}
+
+            <div class="result-message" id="result-{{ task.id }}"></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Басты бетке оралу -->
+    <div class="back-home-section" id="backHomeSection">
+        <h2 style="margin-bottom: 1rem;"><i class="fas fa-trophy"></i> Керемет!</h2>
+        <p style="margin-bottom: 1.5rem; opacity: 0.9;">Сіз бұл тақырыпты аяқтадыңыз. Келесі тақырыпқа өтіңіз!</p>
+        <a href="/student_dashboard" class="back-home-btn">
+            <i class="fas fa-home"></i> Басты бетке оралу
+        </a>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedAnswers = {};
+    let selectedMatches = {};
+
+    // ===== ВИДЕО КАРУСЕЛІ =====
+    let carouselPositions = {};
+
+    function moveCarousel(topicId, direction) {
+        const track = document.getElementById('carousel-track-' + topicId);
+        const dots = document.querySelectorAll('#carousel-dots-' + topicId + ' .carousel-dot');
+        const slides = track.querySelectorAll('.carousel-slide');
+        const totalSlides = slides.length;
+
+        if (!carouselPositions[topicId]) carouselPositions[topicId] = 0;
+
+        carouselPositions[topicId] += direction;
+
+        if (carouselPositions[topicId] < 0) carouselPositions[topicId] = 0;
+        if (carouselPositions[topicId] >= totalSlides) carouselPositions[topicId] = totalSlides - 1;
+
+        track.style.transform = 'translateX(-' + (carouselPositions[topicId] * 100) + '%)';
+
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === carouselPositions[topicId]);
+        });
+    }
+
+    function goToSlide(topicId, slideIndex) {
+        const track = document.getElementById('carousel-track-' + topicId);
+        const dots = document.querySelectorAll('#carousel-dots-' + topicId + ' .carousel-dot');
+
+        carouselPositions[topicId] = slideIndex;
+        track.style.transform = 'translateX(-' + (slideIndex * 100) + '%)';
+
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === slideIndex);
+        });
+    }
+
+    // Сенсор экраны үшін свайп
+    let touchStartX = {};
+
+    document.querySelectorAll('.carousel-container').forEach(container => {
+        container.addEventListener('touchstart', (e) => {
+            const track = container.querySelector('.carousel-track');
+            const topicId = track.id.split('-').pop();
+            touchStartX[topicId] = e.touches[0].clientX;
+        });
+
+        container.addEventListener('touchend', (e) => {
+            const track = container.querySelector('.carousel-track');
+            const topicId = track.id.split('-').pop();
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX[topicId] - touchEndX;
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    moveCarousel(topicId, 1);
+                } else {
+                    moveCarousel(topicId, -1);
+                }
+            }
+        });
+    });
+
+    function selectOption(taskId, option, element) {
+        const container = document.getElementById('options-' + taskId);
+        container.querySelectorAll('.option-item').forEach(item => {
+            item.classList.remove('selected');
+            item.querySelector('.option-radio i').style.display = 'none';
+        });
+        element.classList.add('selected');
+        element.querySelector('.option-radio i').style.display = 'block';
+        selectedAnswers[taskId] = option;
+    }
+
+    // ===== СӘЙКЕСТЕНДІРУ ЖҮЙЕСІ =====
+    let selectedKey = null;
+    let selectedKeyElement = null;
+    let selectedCorrectValue = null;
+    let matchPairs = {};
+
+    function selectMatchKey(taskId, key, correctValue, element) {
+        if (element.classList.contains('matched') || element.classList.contains('disabled')) return;
+
+        const container = document.getElementById('matching-' + taskId);
+        container.querySelectorAll('.keys-column .matching-item').forEach(item => {
+            item.classList.remove('selected-key');
+        });
+
+        element.classList.add('selected-key');
+        selectedKey = key;
+        selectedCorrectValue = correctValue;
+        selectedKeyElement = element;
+    }
+
+    function selectMatchValue(taskId, value, element) {
+        if (element.classList.contains('matched') || element.classList.contains('disabled')) return;
+
+        if (!selectedKey) {
+            element.classList.add('shake');
+            setTimeout(() => element.classList.remove('shake'), 500);
+            return;
+        }
+
+        // Дұрыс жауапты тексеру
+        const isCorrect = (value === selectedCorrectValue);
+
+        if (!matchPairs[taskId]) matchPairs[taskId] = {};
+        matchPairs[taskId][selectedKey] = value;
+
+        if (isCorrect) {
+            // Дұрыс - жасыл белгі
+            element.classList.add('matched');
+            element.classList.add('disabled');
+            if (selectedKeyElement) {
+                selectedKeyElement.classList.add('matched');
+                selectedKeyElement.classList.add('disabled');
+                selectedKeyElement.classList.remove('selected-key');
+            }
+        } else {
+            // Қате - қызыл белгі + қайта таңдау мүмкіндігі
+            element.classList.add('wrong');
+            if (selectedKeyElement) {
+                selectedKeyElement.classList.add('wrong');
+            }
+            setTimeout(() => {
+                element.classList.remove('wrong');
+                if (selectedKeyElement) {
+                    selectedKeyElement.classList.remove('wrong');
+                    selectedKeyElement.classList.remove('selected-key');
+                }
+            }, 800);
+        }
+
+        selectedKey = null;
+        selectedCorrectValue = null;
+        selectedKeyElement = null;
+
+        if (isCorrect) {
+            checkAllMatched(taskId);
+        }
+    }
+
+    function checkAllMatched(taskId) {
+        const container = document.getElementById('matching-' + taskId);
+        const totalKeys = container.querySelectorAll('.keys-column .matching-item').length;
+        const matchedKeys = container.querySelectorAll('.keys-column .matching-item.matched').length;
+
+        if (matchedKeys === totalKeys) {
+            setTimeout(() => submitTask(taskId), 500);
+        }
+    }
+
+    async function submitTask(taskId) {
+        let answer = '';
+
+        if (document.getElementById('answer-' + taskId)) {
+            answer = document.getElementById('answer-' + taskId).value;
+        } else if (selectedAnswers[taskId]) {
+            answer = selectedAnswers[taskId];
+        } else if (matchPairs[taskId]) {
+            const pairs = [];
+            for (const [key, value] of Object.entries(matchPairs[taskId])) {
+                pairs.push(key + ':' + value);
+            }
+            answer = pairs.join('|');
+        }
+
+        if (!answer.trim()) {
+            alert('Жауапты енгізіңіз!');
+            return;
+        }
+
+        try {
+            const response = await fetch('/submit_task', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({task_id: taskId, answer: answer})
+            });
+
+            const data = await response.json();
+            const resultDiv = document.getElementById('result-' + taskId);
+
+            resultDiv.style.display = 'block';
+            if (data.correct) {
+                resultDiv.className = 'result-message result-success';
+                resultDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message + ' (+' + data.score + ' XP)';
+
+                setTimeout(() => {
+                    const taskCard = document.getElementById('task-' + taskId);
+                    taskCard.classList.add('completed');
+                    taskCard.innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <div class="completed-badge">
+                                <i class="fas fa-check-circle"></i> Орындалды! (+${data.score} XP)
+                            </div>
+                        </div>
+                    `;
+                    checkAllTasksCompleted();
+                }, 2000);
+            } else {
+                resultDiv.className = 'result-message result-error';
+                resultDiv.innerHTML = '<i class="fas fa-times-circle"></i> ' + data.message;
+            }
+        } catch (e) {
+            alert('Қате орын алды.');
+        }
+    }
+
+    function checkAllTasksCompleted() {
+        const allCompleted = document.querySelectorAll('.task-card.completed').length === document.querySelectorAll('.task-card').length;
+        if (allCompleted) {
+            document.getElementById('backHomeSection').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+</script>
+{% endblock %}

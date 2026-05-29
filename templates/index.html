@@ -1,0 +1,1112 @@
+{% extends "base.html" %}
+
+{% block title %}Blender 3D - Басты бет{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Басты баптаулар - Тұрақты ашық және таза фон */
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+    }
+
+    /* HERO SECTION - Жарық, кең және неонды градиенттер */
+    .hero {
+        min-height: 100vh;
+        background: radial-gradient(circle at 100% 0%, #f0fdf4 0%, #eef2ff 50%, #f8fafc 100%);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6rem 2rem 4rem 2rem;
+    }
+
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background:
+            radial-gradient(circle at 15% 30%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+            radial-gradient(circle at 85% 70%, rgba(6, 182, 212, 0.1) 0%, transparent 45%),
+            radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    /* Жүзетін фигуралар - Ашық түсті және нәзік */
+    .floating-shapes {
+        position: absolute;
+        width: 100%; height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .shape {
+        position: absolute;
+        opacity: 0.25;
+        filter: blur(0.5px);
+        animation: float 22s infinite ease-in-out;
+    }
+
+    .shape-1 {
+        top: 15%; left: 8%;
+        width: 70px; height: 70px;
+        background: linear-gradient(135deg, #818cf8, #c084fc);
+        border-radius: 18px;
+        transform: rotate(45deg);
+    }
+
+    .shape-2 {
+        top: 65%; right: 12%;
+        width: 110px; height: 110px;
+        background: linear-gradient(135deg, #22d3ee, #60a5fa);
+        border-radius: 50%;
+        animation-delay: -4s;
+    }
+
+    .shape-3 {
+        bottom: 15%; left: 15%;
+        width: 55px; height: 55px;
+        background: #a78bfa;
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        animation-delay: -8s;
+    }
+
+    .shape-4 {
+        top: 25%; right: 25%;
+        width: 90px; height: 90px;
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        animation-delay: -12s;
+    }
+
+    .shape-5 {
+        bottom: 35%; right: 5%;
+        width: 45px; height: 45px;
+        background: linear-gradient(135deg, #fbbf24, #f87171);
+        border-radius: 40%;
+        animation-delay: -2s;
+        animation-duration: 14s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+        33% { transform: translateY(-35px) rotate(120deg) scale(1.05); }
+        66% { transform: translateY(35px) rotate(240deg) scale(0.95); }
+    }
+
+    /* Контент құрылымы */
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: rgba(99, 102, 241, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        color: #4f46e5;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.05);
+    }
+
+    .hero-badge i {
+        color: #0284c7;
+        animation: pulseGlow 2s infinite;
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 3rem;
+        width: 100%;
+    }
+
+    @media (max-width: 992px) {
+        .hero-main {
+            flex-direction: column;
+            gap: 4rem;
+            text-align: center;
+        }
+        .text-side {
+            align-items: center !important;
+            padding-left: 0 !important;
+        }
+        .hero-title, .hero-subtitle {
+            text-align: center !important;
+        }
+    }
+
+    /* МӘТІН ЖӘНЕ БАТЫРМАЛАР (СОЛ ЖАҚ) */
+    .text-side {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        max-width: 650px;
+        flex: 1.2;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 1.5rem;
+        line-height: 1.25;
+        text-align: left;
+    }
+
+    .hero-title .line-1 {
+        display: block;
+        font-size: 1.8rem;
+        color: #64748b;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-title .line-2 {
+        display: block;
+        background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3.2rem;
+        font-weight: 800;
+    }
+
+    .hero-title .line-3 {
+        display: block;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3.5rem;
+        font-weight: 900;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: #475569;
+        margin-bottom: 2.5rem;
+        line-height: 1.7;
+        text-align: left;
+        max-width: 550px;
+    }
+
+    /* LIGHT GLASSMORPHISM КІРУ КАРТОЧКАЛАРЫ */
+    .auth-section-mini {
+        display: flex;
+        flex-direction: row;
+        gap: 1.5rem;
+        width: 100%;
+    }
+
+    @media (max-width: 576px) {
+        .auth-section-mini {
+            flex-direction: column;
+        }
+    }
+
+    .auth-card-mini {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(99, 102, 241, 0.1);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 20px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        text-decoration: none;
+        color: #1e293b;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        flex: 1;
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.05);
+    }
+
+    .auth-card-mini:hover {
+        background: #ffffff;
+        transform: translateY(-5px);
+    }
+
+    .auth-card-mini.teacher-hover:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 15px 30px rgba(99, 102, 241, 0.12);
+    }
+
+    .auth-card-mini.student-hover:hover {
+        border-color: rgba(6, 182, 212, 0.4);
+        box-shadow: 0 15px 30px rgba(6, 182, 212, 0.12);
+    }
+
+    .auth-card-icon-mini {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        color: white;
+    }
+
+    .teacher-icon {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        box-shadow: 0 6px 15px rgba(99, 102, 241, 0.2);
+    }
+    .student-icon {
+        background: linear-gradient(135deg, #06b6d4, #14b8a6);
+        box-shadow: 0 6px 15px rgba(6, 182, 212, 0.2);
+    }
+
+    .auth-card-info h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+        color: #0f172a;
+        letter-spacing: 0.3px;
+    }
+
+    .auth-card-btn-mini {
+        font-size: 0.9rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .auth-card-mini:hover .auth-card-btn-mini {
+        color: #0f172a;
+    }
+
+    .auth-card-btn-mini i {
+        transition: transform 0.3s;
+    }
+
+    .auth-card-mini:hover .auth-card-btn-mini i {
+        transform: translateX(4px);
+    }
+
+    .auth-card-mini.teacher-hover:hover .auth-card-btn-mini i { color: #4f46e5; }
+    .auth-card-mini.student-hover:hover .auth-card-btn-mini i { color: #0891b2; }
+
+    /* РОБОТ ЖАҚ (АШЫҚ ТҮСТІ ЖӘНЕ ЖАРҚЫРАҒАН) */
+    .robot-side {
+        flex-shrink: 0;
+        perspective: 1000px;
+        flex: 0.9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .robot-container-3d {
+        width: 320px;
+        height: 420px;
+        position: relative;
+        transform-style: preserve-3d;
+        animation: robotRotate 7s ease-in-out infinite;
+    }
+
+    @keyframes robotRotate {
+        0%, 100% { transform: rotateY(-12deg) rotateX(2deg); }
+        50% { transform: rotateY(12deg) rotateX(-2deg); }
+    }
+
+    .robot-3d {
+        width: 240px;
+        height: 340px;
+        position: relative;
+        margin: 0 auto;
+        animation: robotFloat 3.5s ease-in-out infinite;
+        transform-style: preserve-3d;
+    }
+
+    @keyframes robotFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+
+    .robot-head {
+        width: 120px;
+        height: 95px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border-radius: 28px 28px 22px 22px;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25), inset 0 -4px 8px rgba(0,0,0,0.15);
+        animation: robotHead 2.5s ease-in-out infinite;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    @keyframes robotHead {
+        0%, 100% { transform: translateX(-50%) rotate(0deg); }
+        50% { transform: translateX(-50%) rotate(2.5deg); }
+    }
+
+    .robot-face {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .robot-eye {
+        width: 24px;
+        height: 24px;
+        background: #0f172a;
+        border-radius: 50%;
+        position: absolute;
+        top: 28px;
+        box-shadow: 0 0 15px rgba(34, 211, 238, 0.8);
+        animation: robotBlink 4s infinite;
+        border: 2px solid #22d3ee;
+    }
+
+    .robot-eye.left { left: 24px; }
+    .robot-eye.right { right: 24px; }
+
+    @keyframes robotBlink {
+        0%, 45%, 55%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.1); }
+    }
+
+    .robot-eye::after {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: #ffffff;
+        border-radius: 50%;
+        position: absolute;
+        top: 3px;
+        right: 3px;
+    }
+
+    .robot-mouth {
+        width: 40px;
+        height: 8px;
+        background: #0f172a;
+        border-radius: 4px;
+        position: absolute;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: robotTalk 2.5s ease-in-out infinite;
+    }
+
+    @keyframes robotTalk {
+        0%, 100% { width: 40px; height: 6px; }
+        50% { width: 44px; height: 10px; background: #22d3ee; box-shadow: 0 0 8px #22d3ee; }
+    }
+
+    .robot-antenna {
+        width: 6px;
+        height: 25px;
+        background: linear-gradient(#22d3ee, #6366f1);
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .antenna-ball {
+        width: 14px;
+        height: 14px;
+        background: #22d3ee;
+        border-radius: 50%;
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 0 20px rgba(34, 211, 238, 1);
+        animation: antennaPulse 1.2s ease-in-out infinite;
+    }
+
+    .robot-body {
+        width: 150px;
+        height: 125px;
+        background: linear-gradient(135deg, #4f46e5, #4338ca);
+        border-radius: 28px;
+        position: absolute;
+        top: 110px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .robot-chest {
+        width: 100px;
+        height: 65px;
+        background: #0f172a;
+        border-radius: 16px;
+        position: absolute;
+        top: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #6366f1;
+    }
+
+    .robot-screen {
+        font-family: 'Consolas', monospace;
+        color: #22d3ee;
+        font-size: 1.6rem;
+        font-weight: 800;
+        text-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
+    }
+
+    .robot-arm {
+        width: 28px;
+        height: 85px;
+        background: linear-gradient(135deg, #6366f1, #4338ca);
+        border-radius: 14px;
+        position: absolute;
+        top: 20px;
+    }
+
+    .robot-arm.left { left: -18px; transform-origin: top center; animation: robotArmLeft 2.5s ease-in-out infinite; }
+    .robot-arm.right { right: -18px; transform-origin: top center; animation: robotArmRight 2.5s ease-in-out infinite; }
+
+    @keyframes robotArmLeft { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(15deg); } }
+    @keyframes robotArmRight { 0%, 100% { transform: rotate(5deg); } 50% { transform: rotate(-15deg); } }
+
+    .robot-hand {
+        width: 24px;
+        height: 24px;
+        background: #22d3ee;
+        border-radius: 50%;
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .robot-legs {
+        position: absolute;
+        top: 235px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 110px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .robot-leg {
+        width: 34px;
+        height: 70px;
+        background: linear-gradient(135deg, #4338ca, #312e81);
+        border-radius: 0 0 16px 16px;
+        animation: robotLeg 1.8s ease-in-out infinite;
+    }
+
+    .robot-leg.left { animation-delay: 0s; }
+    .robot-leg.right { animation-delay: 0.9s; }
+
+    @keyframes robotLeg { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+    .robot-shadow {
+        width: 140px;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.08);
+        filter: blur(5px);
+        border-radius: 50%;
+        position: absolute;
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: shadowScale 3.5s ease-in-out infinite;
+    }
+
+    @keyframes shadowScale {
+        0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+        50% { transform: translateX(-50%) scale(0.8); opacity: 0.3; }
+    }
+
+    /* FEATURES SECTION - Таза ақ түсті стиль */
+    .features-section {
+        padding: 7rem 2rem;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .features-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 4rem;
+        color: #0f172a;
+    }
+
+    .features-grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        padding: 2.5rem 2rem;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        background: #ffffff;
+        border-color: #6366f1;
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.08);
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+    }
+
+    .feature-card h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+        color: #0f172a;
+    }
+
+    .feature-card p {
+        color: #475569;
+        line-height: 1.6;
+        font-size: 1rem;
+    }
+
+    /* TOPICS PREVIEW SECTION */
+    .topics-preview {
+        padding: 7rem 2rem;
+        background: #f8fafc;
+    }
+
+    .topics-preview-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 4rem;
+        color: #0f172a;
+    }
+
+    .topics-grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+    }
+
+    .topic-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+
+    .topic-card:hover {
+        transform: translateY(-5px);
+        border-color: #06b6d4;
+        box-shadow: 0 20px 40px rgba(6, 182, 212, 0.08);
+    }
+
+    .topic-number {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        font-size: 4.5rem;
+        font-weight: 900;
+        opacity: 0.08;
+        color: #6366f1;
+    }
+
+    .topic-card h3 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #0f172a;
+        padding-right: 2rem;
+    }
+
+    .topic-card p {
+        color: #475569;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .topic-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 2rem;
+        font-size: 0.85rem;
+        color: #64748b;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1.2rem;
+    }
+
+    .topic-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #f1f5f9;
+        padding: 0.4rem 0.8rem;
+        border-radius: 50px;
+        color: #475569;
+    }
+
+    .topic-meta i { color: #06b6d4; }
+
+    /* CTA SECTION - Жарқын және тартымды */
+    .cta-section {
+        padding: 6rem 2rem;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-title {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1.2rem;
+    }
+
+    .cta-subtitle {
+        color: #e0e7ff;
+        font-size: 1.2rem;
+        margin-bottom: 2.5rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 1.1rem 3rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        text-decoration: none;
+    }
+
+    .cta-btn-primary {
+        background: white;
+        color: #4f46e5;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .cta-btn-primary:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        background: #f8fafc;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-badge">
+            <i class="fas fa-cube"></i> Blendr 3D Әлемі
+        </div>
+
+        <div class="hero-main">
+            <div class="text-side">
+                <h1 class="hero-title">
+                    <span class="line-1">Мектеп оқушыларына арналған</span>
+                    <span class="line-2">Blender негізінде 3D</span>
+                    <span class="line-3">модельдеу курсы</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Өз қиялыңды шындыққа айналдыр! Таңғажайып 3D кейіпкерлер, орталар құруды үйреніп, алғашқы практикалық жобаларыңды қазірден бастап жаса.
+                </p>
+
+                <div class="auth-section-mini">
+                    <a href="/login_teacher" class="auth-card-mini teacher-hover">
+                        <div class="auth-card-icon-mini teacher-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="auth-card-info">
+                            <h3>Мұғалім</h3>
+                            <span class="auth-card-btn-mini">Кіру парақшасы <i class="fas fa-arrow-right"></i></span>
+                        </div>
+                    </a>
+
+                    <a href="/login_student" class="auth-card-mini student-hover">
+                        <div class="auth-card-icon-mini student-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="auth-card-info">
+                            <h3>Оқушы</h3>
+                            <span class="auth-card-btn-mini">Оқуды бастау <i class="fas fa-arrow-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="robot-side">
+                <div class="robot-container-3d">
+                    <div class="robot-3d">
+                        <div class="robot-head">
+                            <div class="robot-face">
+                                <div class="robot-eye left"></div>
+                                <div class="robot-eye right"></div>
+                                <div class="robot-mouth"></div>
+                            </div>
+                            <div class="robot-antenna">
+                                <div class="antenna-ball"></div>
+                            </div>
+                        </div>
+                        <div class="robot-body">
+                            <div class="robot-chest">
+                                <div class="robot-screen">3D</div>
+                            </div>
+                            <div class="robot-arm left">
+                                <div class="robot-hand"></div>
+                            </div>
+                            <div class="robot-arm right">
+                                <div class="robot-hand"></div>
+                            </div>
+                        </div>
+                        <div class="robot-legs">
+                            <div class="robot-leg left"></div>
+                            <div class="robot-leg right"></div>
+                        </div>
+                        <div class="robot-shadow"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- LIVE STATISTICS SECTION -->
+<section class="live-stats-section" style="padding: 4rem 2rem; background: linear-gradient(135deg, #0f172a, #1e293b); position: relative; overflow: hidden;">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 50%, rgba(99,102,241,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(16,185,129,0.1) 0%, transparent 50%); pointer-events: none;"></div>
+    <div style="max-width: 1200px; margin: 0 auto; position: relative; z-index: 1;">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <h2 style="font-size: 2rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">
+                <i class="fas fa-chart-line" style="color: #22d3ee;"></i> Платформа статистикасы
+            </h2>
+            <p style="color: #94a3b8; font-size: 1rem;">Тіркелген оқушылар мен мұғалімдер саны — нақты уақытта</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="stat-counter-card" style="background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)); border: 2px solid rgba(99,102,241,0.25); border-radius: 24px; padding: 2rem; text-align: center; backdrop-filter: blur(10px); transition: all 0.4s;">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; font-size: 1.8rem; box-shadow: 0 8px 25px rgba(99,102,241,0.35);">👨‍🎓</div>
+                <div class="stat-number" id="studentCount" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; margin-bottom: 0.5rem;">{{ students_count }}</div>
+                <div style="color: #a5b4fc; font-size: 1rem; font-weight: 600;">Оқушы тіркелген</div>
+                <div style="margin-top: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(34,211,238,0.12); color: #22d3ee; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                    <span style="width: 7px; height: 7px; background: #22d3ee; border-radius: 50%; animation: pulse-dot 1.5s infinite;"></span>
+                    Жаңа: +<span id="newStudents">0</span> бүгін
+                </div>
+            </div>
+            <div class="stat-counter-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.15)); border: 2px solid rgba(16,185,129,0.25); border-radius: 24px; padding: 2rem; text-align: center; backdrop-filter: blur(10px); transition: all 0.4s;">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #34d399); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; font-size: 1.8rem; box-shadow: 0 8px 25px rgba(16,185,129,0.35);">👨‍🏫</div>
+                <div class="stat-number" id="teacherCount" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; margin-bottom: 0.5rem;">{{ teachers_count }}</div>
+                <div style="color: #6ee7b7; font-size: 1rem; font-weight: 600;">Мұғалім тіркелген</div>
+                <div style="margin-top: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(52,211,153,0.12); color: #34d399; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                    <span style="width: 7px; height: 7px; background: #34d399; border-radius: 50%; animation: pulse-dot 1.5s infinite;"></span>
+                    Жаңа: +<span id="newTeachers">0</span> бүгін
+                </div>
+            </div>
+            <div class="stat-counter-card" style="background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(251,191,36,0.15)); border: 2px solid rgba(245,158,11,0.25); border-radius: 24px; padding: 2rem; text-align: center; backdrop-filter: blur(10px); transition: all 0.4s;">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #f59e0b, #fbbf24); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; font-size: 1.8rem; box-shadow: 0 8px 25px rgba(245,158,11,0.35);">🏆</div>
+                <div class="stat-number" id="totalCount" style="font-size: 3rem; font-weight: 900; color: white; line-height: 1; margin-bottom: 0.5rem;">{{ total_count }}</div>
+                <div style="color: #fcd34d; font-size: 1rem; font-weight: 600;">Барлық пайдаланушы</div>
+                <div style="margin-top: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(251,191,36,0.12); color: #fbbf24; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                    <i class="fas fa-arrow-up" style="font-size: 0.7rem;"></i>
+                    <span id="growthPercent">0</span>% өсім
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.06); padding: 0.5rem 1.2rem; border-radius: 50px; color: #94a3b8; font-size: 0.85rem;">
+                <span style="width: 8px; height: 8px; background: #22d3ee; border-radius: 50%; animation: pulse-dot 2s infinite; box-shadow: 0 0 8px #22d3ee;"></span>
+                Жаңартылған: <span id="lastUpdate">--:--</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(1.4); }
+    }
+    .stat-counter-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(255,255,255,0.3) !important;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .stat-number.updating {
+        color: #22d3ee !important;
+        transform: scale(1.08);
+        transition: all 0.3s ease;
+    }
+</style>
+
+<!-- FAQ PREVIEW SECTION -->
+<section class="faq-preview-section" style="padding: 5rem 2rem; background: linear-gradient(135deg, #f8fafc, #eef2ff);">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">
+                <i class="fas fa-question-circle" style="color: #6366f1;"></i> Жиі қойылатын сұрақтар
+            </h2>
+            <p style="color: #64748b; font-size: 1.1rem;">Blender 3D бойынша 105 сұраққа дайын жауаптар</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border-left: 5px solid #6366f1;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🖥️</div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.3rem;">Интерфейс</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Viewport, Object Mode, Edit Mode, құралдар</p>
+            </div>
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border-left: 5px solid #10b981;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔧</div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.3rem;">Модельдеу</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Mesh, Extrude, Boolean, Mirror</p>
+            </div>
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border-left: 5px solid #f59e0b;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎨</div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.3rem;">Материалдар</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">PBR, Texture, UV Mapping, Normal Map</p>
+            </div>
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border-left: 5px solid #f97316;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💡</div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.3rem;">Жарық</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Point, Sun, Area, HDRI, Camera</p>
+            </div>
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border-left: 5px solid #ec4899;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📸</div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.3rem;">Рендеринг</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Eevee, Cycles, Samples, Denoise</p>
+            </div>
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border-left: 5px solid #8b5cf6;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎬</div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.3rem;">Анимация</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Keyframe, Timeline, Constraints</p>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <a href="/faq" style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 1rem 2.5rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 50px; font-weight: 700; text-decoration: none; font-size: 1.1rem; transition: all 0.3s; box-shadow: 0 5px 20px rgba(99,102,241,0.3);">
+                <i class="fas fa-list-ul"></i> Барлық сұрақтарды көру
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="features-section">
+    <h2 class="features-title">🚀 Платформа мүмкіндіктері</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #4f46e5;">
+                🎮
+            </div>
+            <h3>Геймификация</h3>
+            <p>XP, жоғары деңгейлер, бірегей бейдждер мен көшбасшылар тізімі — оқу процесін қызықты ойынға айналдырады!</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); color: #00838f;">
+                🤖
+            </div>
+            <h3>AI Көмекші</h3>
+            <p>24/7 режимде Blender бойынша кез келген күрделі сұрақтарға жауап беретін ақылды жасанды интеллект.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af;">
+                📊
+            </div>
+            <h3>Прогресс бақылау</h3>
+            <p>Нақты уақыттағы толық статистика мен жетістіктерді бақылайтын жеке аналитикалық панель.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #9d174d;">
+                🎥
+            </div>
+            <h3>Видео сабақтар</h3>
+            <p>YouTube интеграциясымен жабдықталған, қысқа әрі түсінікті форматтағы интерактивті видеосабақтар жинағы.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46;">
+                📁
+            </div>
+            <h3>Жоба жүктеу</h3>
+            <p>Тікелей платформада өз .blend форматтағы файлдарыңды мұғалімге тексеруге жіберу жүйесі.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #ffe4e6, #fecdd3); color: #9f1239;">
+                🏆
+            </div>
+            <h3>Сертификат</h3>
+            <p>Курсты сәтті аяқтаған соң өзіндік QR-коды бар, AI арқылы генерацияланатын ресми сертификатқа ие бол.</p>
+        </div>
+    </div>
+</section>
+
+<section class="topics-preview">
+    <h2 class="topics-preview-title">📚 Оқу тақырыптары</h2>
+    <div class="topics-grid">
+        {% for topic in topics %}
+        <div class="topic-card">
+            <div class="topic-number">§{{ loop.index }}</div>
+            <h3>{{ topic.title }}</h3>
+            <p>{{ topic.description }}</p>
+            <div class="topic-meta">
+                <span><i class="fas fa-tasks"></i> 5 тапсырма</span>
+                <span><i class="fas fa-video"></i> Видеосабақ</span>
+                <span><i class="fas fa-folder"></i> Практика</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2 class="cta-title">Бүгіннен бастап 3D шебері атан!</h2>
+    <p class="cta-subtitle">Болашақтың ең сұранысқа ие саласына алғашқы қадам жаса. Мүлдем тегін тіркеліп, дәл қазір бірінші сабақты аш.</p>
+    <a href="/register_student" class="cta-btn cta-btn-primary">
+        <i class="fas fa-rocket"></i> Оқушы ретінде тіркелу
+    </a>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ========== LIVE STATISTICS ==========
+let currentStats = { students: 0, teachers: 0, total: 0 };
+
+function animateCounter(element, target, duration) {
+    duration = duration || 1200;
+    var start = parseInt(element.textContent.replace(/[^0-9]/g, '')) || 0;
+    var range = target - start;
+    if (range === 0) return;
+    var startTime = performance.now();
+
+    function update(currentTime) {
+        var elapsed = currentTime - startTime;
+        var progress = Math.min(elapsed / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 3);
+        var current = Math.round(start + range * ease);
+        element.textContent = current.toLocaleString('kk-KZ');
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            element.textContent = target.toLocaleString('kk-KZ');
+            element.classList.remove('updating');
+        }
+    }
+
+    element.classList.add('updating');
+    requestAnimationFrame(update);
+}
+
+async function fetchStats() {
+    try {
+        var response = await fetch('/api/stats');
+        var data = await response.json();
+
+        if (data.success) {
+            var studentEl = document.getElementById('studentCount');
+            var teacherEl = document.getElementById('teacherCount');
+            var totalEl = document.getElementById('totalCount');
+
+            if (studentEl) animateCounter(studentEl, data.students || 0);
+            if (teacherEl) animateCounter(teacherEl, data.teachers || 0);
+            if (totalEl) animateCounter(totalEl, data.total || 0);
+
+            var newStudentsEl = document.getElementById('newStudents');
+            var newTeachersEl = document.getElementById('newTeachers');
+            var growthEl = document.getElementById('growthPercent');
+
+            if (newStudentsEl) newStudentsEl.textContent = data.new_students_today || 0;
+            if (newTeachersEl) newTeachersEl.textContent = data.new_teachers_today || 0;
+            if (growthEl) growthEl.textContent = data.growth_percent || 0;
+
+            var lastUpdateEl = document.getElementById('lastUpdate');
+            if (lastUpdateEl) {
+                lastUpdateEl.textContent = data.last_updated || new Date().toLocaleTimeString('kk-KZ', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+    } catch (e) {
+        console.log('Stats update failed:', e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var studentEl = document.getElementById('studentCount');
+    var teacherEl = document.getElementById('teacherCount');
+    var totalEl = document.getElementById('totalCount');
+
+    if (studentEl) currentStats.students = parseInt(studentEl.textContent) || 0;
+    if (teacherEl) currentStats.teachers = parseInt(teacherEl.textContent) || 0;
+    if (totalEl) currentStats.total = parseInt(totalEl.textContent) || 0;
+
+    var lastUpdateEl = document.getElementById('lastUpdate');
+    if (lastUpdateEl) {
+        lastUpdateEl.textContent = new Date().toLocaleTimeString('kk-KZ', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    fetchStats();
+    setInterval(fetchStats, 30000);
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) fetchStats();
+    });
+});
+// ========== END LIVE STATISTICS ==========
+</script>
+{% endblock %}

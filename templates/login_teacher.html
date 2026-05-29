@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Мұғалім кіру{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 70px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        margin: 0 auto;
+    }
+
+    .auth-card {
+        background: white;
+        padding: 3rem;
+        border-radius: 30px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .auth-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--dark);
+    }
+
+    .auth-subtitle {
+        color: #64748b;
+        margin-top: 0.5rem;
+    }
+
+    .auth-form {
+        margin-top: 2rem;
+    }
+
+    .form-icon {
+        position: relative;
+    }
+
+    .form-icon i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+    }
+
+    .form-icon input {
+        padding-left: 3rem;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .auth-footer a {
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card fade-in">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h1 class="auth-title">Мұғалім кіру</h1>
+            <p class="auth-subtitle">Аккаунтыңызға кіріңіз</p>
+        </div>
+
+        <form class="auth-form" method="POST" action="/login_teacher">
+            <div class="form-group">
+                <label class="form-label">Телефон нөмірі</label>
+                <div class="form-icon">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" name="phone" class="form-input" placeholder="+7 (XXX) XXX-XX-XX" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Пароль</label>
+                <div class="form-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" class="form-input" placeholder="Парольді енгізіңіз" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;">
+                <i class="fas fa-sign-in-alt"></i> Кіру
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Аккаунтыңыз жоқ па? <a href="/register_teacher">Тіркелу</a></p>
+            <p style="margin-top: 1rem;"><a href="/login_student">Оқушы ретінде кіру</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

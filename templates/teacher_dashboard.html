@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}Мұғалім панелі{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .dashboard-title { font-size: 2rem; font-weight: 800; }
+    .dashboard-subtitle { opacity: 0.9; margin-top: 0.5rem; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-item { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); text-align: center; }
+    .stat-item-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .stat-item-value { font-size: 2rem; font-weight: 800; color: var(--dark); }
+    .stat-item-label { color: #64748b; font-size: 0.9rem; }
+
+    .section-card { background: white; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .section-title { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .class-card { background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 15px; padding: 1.5rem; border-left: 5px solid #6366f1; }
+    .class-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .class-code { background: #6366f1; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; }
+    .class-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .class-stat { text-align: center; }
+    .class-stat-value { font-size: 1.5rem; font-weight: 700; color: #6366f1; }
+    .class-stat-label { font-size: 0.8rem; color: #64748b; }
+    .progress-section { margin-top: 1rem; }
+    .progress-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+
+    .student-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .student-table th { background: #f8fafc; padding: 1rem; text-align: left; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
+    .student-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+    .student-table tr:hover { background: #f9fafb; }
+
+    /* Жүктелген файлдар */
+    .submissions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; }
+    .submission-card { background: #f8fafc; border-radius: 15px; padding: 1.5rem; border: 2px solid transparent; transition: all 0.3s; }
+    .submission-card:hover { border-color: #6366f1; transform: translateY(-3px); }
+    .submission-card.graded { border-color: #10b981; background: #f0fdf4; }
+    .submission-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .submission-student { font-weight: 700; font-size: 1.1rem; }
+    .submission-topic { color: #6366f1; font-size: 0.9rem; }
+    .submission-date { color: #64748b; font-size: 0.8rem; margin-bottom: 1rem; }
+
+    .grade-form { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+    .grade-form.active { display: block; }
+    .grade-input { width: 100%; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 0.5rem; font-family: 'Nunito', sans-serif; }
+    .grade-input:focus { outline: none; border-color: #6366f1; }
+
+    .grade-display { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem; }
+    .grade-display.pending { background: #64748b; }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px; }
+    .modal-header { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .badge { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">👨‍🏫 Мұғалім панелі</h1>
+            <p class="dashboard-subtitle">Қош келдіңіз, {{ session.teacher_name }}!</p>
+        </div>
+        <a href="/logout" class="btn btn-outline">Шығу</a>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-item-icon">📚</div>
+            <div class="stat-item-value">{{ classes|length }}</div>
+            <div class="stat-item-label">Сыныптар</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-item-icon">👨‍🎓</div>
+            <div class="stat-item-value">{{ students_stats|sum(attribute='count') }}</div>
+            <div class="stat-item-label">Оқушылар</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-item-icon">📊</div>
+            <div class="stat-item-value">{{ students_stats|sum(attribute='total_xp') }}</div>
+            <div class="stat-item-label">Жалпы XP</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-item-icon">📁</div>
+            <div class="stat-item-value">{{ submissions|length }}</div>
+            <div class="stat-item-label">Жүктелген жобалар</div>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-header">
+            <h2 class="section-title">📚 Менің сыныптарым</h2>
+            <button class="btn btn-primary" onclick="openModal()">
+                <i class="fas fa-plus"></i> Сынып құру
+            </button>
+        </div>
+
+        {% if classes %}
+        <div class="class-grid">
+            {% for stat in students_stats %}
+            <div class="class-card">
+                <div class="class-name">{{ stat.class.class_name }}</div>
+                <div class="class-code">Код: {{ stat.class.class_code }}</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Пароль: {{ stat.class.class_password }}</div>
+
+                <div class="class-stats">
+                    <div class="class-stat">
+                        <div class="class-stat-value">{{ stat.count }}</div>
+                        <div class="class-stat-label">Оқушы</div>
+                    </div>
+                    <div class="class-stat">
+                        <div class="class-stat-value">{{ stat.total_xp }}</div>
+                        <div class="class-stat-label">XP</div>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span>Орташа прогресс</span>
+                        <span>{{ stat.avg_progress }}%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ stat.avg_progress }}%"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem;">👨‍🎓 Оқушылар тізімі</h3>
+        <div style="overflow-x: auto;">
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Аты-жөні</th>
+                        <th>Сынып</th>
+                        <th>XP</th>
+                        <th>Деңгей</th>
+                        <th>Прогресс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in students_stats %}
+                        {% for student in stat.students %}
+                        <tr>
+                            <td><strong>{{ student.full_name }}</strong></td>
+                            <td>{{ stat.class.class_name }}</td>
+                            <td>{{ student.xp }}</td>
+                            <td><span class="badge badge-success">{{ student.level }}</span></td>
+                            <td>
+                                <div class="progress-container" style="height: 8px;">
+                                    <div class="progress-bar" style="width: {{ stat.avg_progress }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: #64748b;">
+            <i class="fas fa-school" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <p>Сыныптар әлі құрылмаған. Жаңа сынып құрыңыз!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Жүктелген жобалар -->
+    <div class="section-card">
+        <h2 class="section-title"><i class="fas fa-folder-open"></i> Жүктелген практикалық жобалар</h2>
+
+        {% if submissions %}
+        <div class="submissions-grid">
+            {% for sub in submissions %}
+            <div class="submission-card {% if sub.status == 'graded' %}graded{% endif %}">
+                <div class="submission-header">
+                    <div>
+                        <div class="submission-student">{{ sub.full_name }}</div>
+                        <div class="submission-topic">{{ sub.topic_title }}</div>
+                    </div>
+                    {% if sub.status == 'graded' %}
+                    <div class="grade-display">
+                        <i class="fas fa-star"></i> {{ sub.teacher_score }}/10
+                    </div>
+                    {% else %}
+                    <div class="grade-display pending">
+                        <i class="fas fa-clock"></i> Күтуде
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="submission-date">
+                    <i class="fas fa-calendar"></i> {{ sub.submitted_at }}
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <a href="/download/{{ sub.filename }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        <i class="fas fa-download"></i> Жүктеу
+                    </a>
+                    {% if sub.status != 'graded' %}
+                    <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="openGradeModal({{ sub.id }})">
+                        <i class="fas fa-star"></i> Бағалау
+                    </button>
+                    {% endif %}
+                </div>
+
+                {% if sub.teacher_comment %}
+                <div style="background: #f0f2f5; padding: 0.8rem; border-radius: 10px; font-size: 0.9rem;">
+                    <strong><i class="fas fa-comment"></i> Пікір:</strong> {{ sub.teacher_comment }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: #64748b;">
+            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <p>Әлі жүктелген жоба жоқ</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Сынып құру модальді терезесі -->
+<div class="modal" id="createClassModal">
+    <div class="modal-content">
+        <h2 class="modal-header">📚 Жаңа сынып құру</h2>
+        <form id="createClassForm">
+            <div class="form-group">
+                <label class="form-label">Сынып атауы</label>
+                <input type="text" name="class_name" class="form-input" placeholder='Мысалы: 6 "А" сынып' required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Сынып коды</label>
+                <input type="text" name="class_code" class="form-input" placeholder="Мысалы: 6A2026" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Сынып паролі</label>
+                <input type="text" name="class_password" class="form-input" placeholder="Оқушыларға беретін пароль" required>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Болдырмау</button>
+                <button type="submit" class="btn btn-primary">Сынып құру</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Бағалау модальді терезесі -->
+<div class="modal" id="gradeModal">
+    <div class="modal-content">
+        <h2 class="modal-header"><i class="fas fa-star"></i> Жобаны бағалау</h2>
+        <form id="gradeForm">
+            <input type="hidden" id="submissionId" name="submission_id">
+            <div class="form-group">
+                <label class="form-label">Баға (0-10)</label>
+                <input type="number" id="gradeScore" name="score" class="form-input" min="0" max="10" step="0.5" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Пікір (міндетті емес)</label>
+                <textarea id="gradeComment" name="comment" class="form-input" rows="3" placeholder="Оқушыға пікір қалдырыңыз..."></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeGradeModal()">Болдырмау</button>
+                <button type="submit" class="btn btn-primary">Бағаны сақтау</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentSubmissionId = null;
+
+    function openModal() {
+        document.getElementById('createClassModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('createClassModal').classList.remove('active');
+    }
+
+    function openGradeModal(subId) {
+        currentSubmissionId = subId;
+        document.getElementById('submissionId').value = subId;
+        document.getElementById('gradeModal').classList.add('active');
+    }
+
+    function closeGradeModal() {
+        document.getElementById('gradeModal').classList.remove('active');
+        currentSubmissionId = null;
+    }
+
+    document.getElementById('createClassForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = {
+            class_name: formData.get('class_name'),
+            class_code: formData.get('class_code'),
+            class_password: formData.get('class_password')
+        };
+
+        try {
+            const response = await fetch('/create_class', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Сынып сәтті құрылды!');
+                window.location.reload();
+            } else {
+                alert(result.error || 'Қате орын алды');
+            }
+        } catch (e) {
+            alert('Қате орын алды. Қайта байқап көріңіз.');
+        }
+    });
+
+    document.getElementById('gradeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const score = document.getElementById('gradeScore').value;
+        const comment = document.getElementById('gradeComment').value;
+
+        try {
+            const response = await fetch('/grade_submission/' + currentSubmissionId, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({score: score, comment: comment})
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Баға сәтті қойылды! Оқушыға хабарлама жіберілді.');
+                window.location.reload();
+            } else {
+                alert(result.error || 'Қате орын алды');
+            }
+        } catch (e) {
+            alert('Қате орын алды. Қайта байқап көріңіз.');
+        }
+    });
+
+    document.getElementById('createClassModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    document.getElementById('gradeModal').addEventListener('click', function(e) {
+        if (e.target === this) closeGradeModal();
+    });
+</script>
+{% endblock %}
