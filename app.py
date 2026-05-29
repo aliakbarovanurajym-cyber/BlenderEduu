@@ -1052,6 +1052,30 @@ def save_student_project():
     conn.close()
     return jsonify({'success': True, 'message': 'Жоба сәтті сақталды!'})
 
+@app.route("/db")
+def db_view():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("SELECT * FROM students")
+    data = cur.fetchall()
+
+    return str(data)
+
+@app.route("/admin")
+def admin_panel():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Барлық таблицалардан дерек алу
+    cur.execute("SELECT * FROM students")
+    students = cur.fetchall()
+
+    cur.execute("SELECT * FROM teachers")
+    teachers = cur.fetchall()
+
+    return render_template("admin.html", students=students, teachers=teachers)
+
 @app.route('/faq')
 def faq_page():
     return render_template('faq.html')
