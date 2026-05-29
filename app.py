@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_from_directory
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import hashlib
 from datetime import datetime, timedelta
 import os
@@ -7,7 +8,11 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'blender3d_secret_key_2026'
-DATABASE = 'database.db'
+
+# PostgreSQL конфигурациясы
+def get_db():
+    return psycopg2.connect(os.environ.get("DATABASE_URL"))
+
 UPLOAD_FOLDER = 'uploads'
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -16,15 +21,14 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 def get_unread_count():
     if 'student_id' in session and session.get('user_type') == 'student':
         conn = get_db()
-        count = conn.execute("SELECT COUNT(*) FROM notifications WHERE student_id = ? AND is_read = 0", (session['student_id'],)).fetchone()[0]
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT COUNT(*) as cnt FROM notifications WHERE student_id = %s AND is_read = 0", (session['student_id'],))
+        count = cur.fetchone()['cnt']
+        cur.close()
         conn.close()
         return count
     return 0
@@ -40,45 +44,48 @@ def inject_nav_data():
 
 def init_db():
     conn = get_db()
-    c = conn.cursor()
-    c.execute("""
+    cur = conn.cursor()
+
+    # Таблицаларды құру
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS teachers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL,
-            phone TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            full_name VARCHAR(255) NOT NULL,
+            phone VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS classes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            teacher_id INTEGER NOT NULL,
-            class_name TEXT NOT NULL,
-            class_code TEXT UNIQUE NOT NULL,
-            class_password TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (teacher_id) REFERENCES teachers(id)
+            id SERIAL PRIMARY KEY,
+            teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+            class_name VARCHAR(255) NOT NULL,
+            class_code VARCHAR(50) UNIQUE NOT NULL,
+            class_password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL,
-            class_id INTEGER NOT NULL,
-            class_password TEXT NOT NULL,
-            password TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            full_name VARCHAR(255) NOT NULL,
+            class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+            class_password VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
             xp INTEGER DEFAULT 0,
             level INTEGER DEFAULT 1,
             total_score INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (class_id) REFERENCES classes(id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS topics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
             description TEXT,
             video_url TEXT,
             theory TEXT,
@@ -86,104 +93,120 @@ def init_db():
             order_num INTEGER DEFAULT 0
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS practical_projects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            topic_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
             project_num INTEGER NOT NULL,
-            title TEXT NOT NULL,
+            title VARCHAR(255) NOT NULL,
             description TEXT,
             steps TEXT,
             criteria TEXT,
-            order_num INTEGER DEFAULT 0,
-            FOREIGN KEY (topic_id) REFERENCES topics(id)
+            order_num INTEGER DEFAULT 0
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            topic_id INTEGER NOT NULL,
-            task_type TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+            task_type VARCHAR(50) NOT NULL,
             question TEXT NOT NULL,
             options TEXT,
             correct_answer TEXT,
             points INTEGER DEFAULT 10,
-            order_num INTEGER DEFAULT 0,
-            FOREIGN KEY (topic_id) REFERENCES topics(id)
+            order_num INTEGER DEFAULT 0
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS student_progress (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            task_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
             completed INTEGER DEFAULT 0,
             score INTEGER DEFAULT 0,
             completed_at TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id),
-            FOREIGN KEY (task_id) REFERENCES tasks(id)
+            UNIQUE(student_id, task_id)
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS badges (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            badge_name TEXT NOT NULL,
-            badge_icon TEXT,
-            earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id)
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            badge_name VARCHAR(255) NOT NULL,
+            badge_icon VARCHAR(50),
+            earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
-            user_type TEXT NOT NULL,
+            user_type VARCHAR(50) NOT NULL,
             message TEXT NOT NULL,
             response TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS project_submissions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            project_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            project_id INTEGER NOT NULL REFERENCES practical_projects(id) ON DELETE CASCADE,
             topic_id INTEGER NOT NULL,
-            filename TEXT NOT NULL,
+            filename VARCHAR(255) NOT NULL,
             filepath TEXT NOT NULL,
-            file_format TEXT DEFAULT 'blend',
+            file_format VARCHAR(10) DEFAULT 'blend',
             submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             teacher_score INTEGER DEFAULT NULL,
             teacher_comment TEXT DEFAULT NULL,
             graded_at TIMESTAMP DEFAULT NULL,
-            status TEXT DEFAULT 'pending',
-            FOREIGN KEY (student_id) REFERENCES students(id),
-            FOREIGN KEY (project_id) REFERENCES practical_projects(id)
+            status VARCHAR(50) DEFAULT 'pending'
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
             message TEXT NOT NULL,
             is_read INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("""
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS certificates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            certificate_code TEXT UNIQUE NOT NULL,
-            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id)
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            certificate_code VARCHAR(255) UNIQUE NOT NULL,
+            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    c.execute("SELECT COUNT(*) FROM topics")
-    if c.fetchone()[0] == 0:
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS student_projects (
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            project_id INTEGER NOT NULL REFERENCES practical_projects(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            tools TEXT,
+            screenshot1 VARCHAR(255),
+            screenshot2 VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Бастапқы деректер
+    cur.execute("SELECT COUNT(*) as cnt FROM topics")
+    if cur.fetchone()['cnt'] == 0:
         topics_data = [
             ("§1. Интерфейс және негізгі құралдар", "Blender бағдарламасының интерфейсімен танысу", "https://youtu.be/GVy2Gpi81rU",
              "Blender — ашық бастапқы коды бар 3D компьютерлік графика бағдарламасы. Ол 3D модельдеу, анимация, рендеринг, видео монтаж және т.б. мүмкіндіктерді қамтиды.",
@@ -207,9 +230,13 @@ def init_db():
              "Жобалық жұмыс — бұл оқушының өзі жасаған 3D моделі.",
              "9,10-практикалық жобалар", 7),
         ]
-        c.executemany("INSERT INTO topics (title, description, video_url, theory, practical_guide, order_num) VALUES (?,?,?,?,?,?)", topics_data)
-    c.execute("SELECT COUNT(*) FROM practical_projects")
-    if c.fetchone()[0] == 0:
+        cur.executemany("""
+            INSERT INTO topics (title, description, video_url, theory, practical_guide, order_num) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, topics_data)
+
+    cur.execute("SELECT COUNT(*) as cnt FROM practical_projects")
+    if cur.fetchone()['cnt'] == 0:
         projects_data = [
             (1, 1, "1-практикалық жоба. Жұмыс үстелін модельдеу", "Жұмыс үстелінің 3D моделін жасау.", "1. Blender ашыңыз|2. Объектілерді қосыңыз|3. Рендер жасаңыз", "Модель (2)|Материал (2)|Жарық (2)|Камера (2)|Көркемдік (2)", 1),
             (2, 2, "2-практикалық жоба. Модель құру", "Базалық объектілерді қолдану.", "1. Объект таңдаңыз|2. Modifier қолданыңыз|3. Edit Mode|4. Рендер", "Модель (2)|Modifier (2)|Тегістік (2)|Деталь (2)|Көркемдік (2)", 1),
@@ -222,9 +249,13 @@ def init_db():
             (7, 9, "9-практикалық жоба. 3D жоба", "Өз жобаңыз.", "1. Тақырып|2. Жоспар|3. Модель|4. Материал|5. Рендер", "Тақырып (2)|Модель (2)|Материал (2)|Жарық (2)|Рендер (2)", 1),
             (7, 10, "10-практикалық жоба. Презентация", "Жобаны қорғау.", "1. 5 сурет|2. Презентация|3. Сипаттама|4. Қорғау", "Құрылым (2)|Сурет (2)|Сипаттама (2)|Техника (2)|Қорғау (2)", 2),
         ]
-        c.executemany("INSERT INTO practical_projects (topic_id, project_num, title, description, steps, criteria, order_num) VALUES (?,?,?,?,?,?,?)", projects_data)
-    c.execute("SELECT COUNT(*) FROM tasks")
-    if c.fetchone()[0] == 0:
+        cur.executemany("""
+            INSERT INTO practical_projects (topic_id, project_num, title, description, steps, criteria, order_num) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, projects_data)
+
+    cur.execute("SELECT COUNT(*) as cnt FROM tasks")
+    if cur.fetchone()['cnt'] == 0:
         tasks_data = [
             (1, "multiple_choice", "Blender негізгі панелі?", "3D Viewport|Outliner|Properties|Timeline", "3D Viewport", 10, 1),
             (1, "fill_blank", "Объектілерді қозғалту үшін ___ пернесі.", None, "G", 10, 2),
@@ -237,8 +268,13 @@ def init_db():
             (6, "multiple_choice", "Анимация негізі?", "Keyframe|Modifier|Shader", "Keyframe", 10, 1),
             (7, "multiple_choice", "Презентация неше сурет?", "1|3|5|10", "5", 10, 1),
         ]
-        c.executemany("INSERT INTO tasks (topic_id, task_type, question, options, correct_answer, points, order_num) VALUES (?,?,?,?,?,?,?)", tasks_data)
+        cur.executemany("""
+            INSERT INTO tasks (topic_id, task_type, question, options, correct_answer, points, order_num) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, tasks_data)
+
     conn.commit()
+    cur.close()
     conn.close()
 
 init_db()
@@ -246,11 +282,17 @@ init_db()
 @app.route('/')
 def index():
     conn = get_db()
-    teachers_count = conn.execute("SELECT COUNT(*) FROM teachers").fetchone()[0]
-    students_count = conn.execute("SELECT COUNT(*) FROM students").fetchone()[0]
-    topics = conn.execute("SELECT * FROM topics ORDER BY order_num").fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) as cnt FROM teachers")
+    teachers_count = cur.fetchone()['cnt']
+    cur.execute("SELECT COUNT(*) as cnt FROM students")
+    students_count = cur.fetchone()['cnt']
+    cur.execute("SELECT * FROM topics ORDER BY order_num")
+    topics = cur.fetchall()
+    cur.close()
     conn.close()
-    return render_template('index.html', teachers_count=teachers_count, students_count=students_count, total_count=teachers_count + students_count, topics=topics)
+    return render_template('index.html', teachers_count=teachers_count, students_count=students_count, 
+                          total_count=teachers_count + students_count, topics=topics)
 
 @app.route('/register_teacher', methods=['GET', 'POST'])
 def register_teacher():
@@ -260,14 +302,17 @@ def register_teacher():
         password = request.form['password']
         hashed = hashlib.sha256(password.encode()).hexdigest()
         conn = get_db()
+        cur = conn.cursor()
         try:
-            conn.execute("INSERT INTO teachers (full_name, phone, password) VALUES (?, ?, ?)", (full_name, phone, hashed))
+            cur.execute("INSERT INTO teachers (full_name, phone, password) VALUES (%s, %s, %s)", (full_name, phone, hashed))
             conn.commit()
             flash('Мұғалім сәтті тіркелді!', 'success')
             return redirect(url_for('login_teacher'))
-        except sqlite3.IntegrityError:
+        except psycopg2.IntegrityError:
+            conn.rollback()
             flash('Бұл телефон бұрын тіркелген!', 'error')
         finally:
+            cur.close()
             conn.close()
     return render_template('register_teacher.html')
 
@@ -278,7 +323,10 @@ def login_teacher():
         password = request.form['password']
         hashed = hashlib.sha256(password.encode()).hexdigest()
         conn = get_db()
-        teacher = conn.execute("SELECT * FROM teachers WHERE phone = ? AND password = ?", (phone, hashed)).fetchone()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM teachers WHERE phone = %s AND password = %s", (phone, hashed))
+        teacher = cur.fetchone()
+        cur.close()
         conn.close()
         if teacher:
             session['teacher_id'] = teacher['id']
@@ -294,23 +342,44 @@ def teacher_dashboard():
     if 'teacher_id' not in session or session.get('user_type') != 'teacher':
         return redirect(url_for('login_teacher'))
     conn = get_db()
-    classes = conn.execute("SELECT * FROM classes WHERE teacher_id = ?", (session['teacher_id'],)).fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM classes WHERE teacher_id = %s", (session['teacher_id'],))
+    classes = cur.fetchall()
     students_stats = []
     all_submissions = []
     for cls in classes:
-        students = conn.execute("SELECT * FROM students WHERE class_id = ?", (cls['id'],)).fetchall()
+        cur.execute("SELECT * FROM students WHERE class_id = %s", (cls['id'],))
+        students = cur.fetchall()
         total_xp = sum(s['xp'] for s in students) if students else 0
         avg_progress = 0
         if students:
             for s in students:
-                progress = conn.execute("SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total FROM student_progress WHERE student_id = ? AND completed = 1", (s['id'],)).fetchone()
+                cur.execute("""
+                    SELECT COUNT(*) as completed, 
+                    (SELECT COUNT(*) FROM tasks) as total 
+                    FROM student_progress 
+                    WHERE student_id = %s AND completed = 1
+                """, (s['id'],))
+                progress = cur.fetchone()
                 if progress['total'] > 0:
                     avg_progress += (progress['completed'] / progress['total']) * 100
             avg_progress = avg_progress / len(students) if students else 0
-        students_stats.append({'class': cls, 'students': students, 'count': len(students), 'total_xp': total_xp, 'avg_progress': round(avg_progress, 1)})
+        students_stats.append({
+            'class': cls, 'students': students, 'count': len(students), 
+            'total_xp': total_xp, 'avg_progress': round(avg_progress, 1)
+        })
         for s in students:
-            subs = conn.execute("SELECT ps.*, pp.title as project_title, s.full_name FROM project_submissions ps JOIN practical_projects pp ON ps.project_id = pp.id JOIN students s ON ps.student_id = s.id WHERE ps.student_id = ? ORDER BY ps.submitted_at DESC", (s['id'],)).fetchall()
+            cur.execute("""
+                SELECT ps.*, pp.title as project_title, s.full_name 
+                FROM project_submissions ps 
+                JOIN practical_projects pp ON ps.project_id = pp.id 
+                JOIN students s ON ps.student_id = s.id 
+                WHERE ps.student_id = %s 
+                ORDER BY ps.submitted_at DESC
+            """, (s['id'],))
+            subs = cur.fetchall()
             all_submissions.extend(subs)
+    cur.close()
     conn.close()
     return render_template('teacher_dashboard.html', classes=classes, students_stats=students_stats, submissions=all_submissions)
 
@@ -320,13 +389,19 @@ def create_class():
         return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     conn = get_db()
+    cur = conn.cursor()
     try:
-        conn.execute("INSERT INTO classes (teacher_id, class_name, class_code, class_password) VALUES (?, ?, ?, ?)", (session['teacher_id'], data.get('class_name'), data.get('class_code'), data.get('class_password')))
+        cur.execute("""
+            INSERT INTO classes (teacher_id, class_name, class_code, class_password) 
+            VALUES (%s, %s, %s, %s)
+        """, (session['teacher_id'], data.get('class_name'), data.get('class_code'), data.get('class_password')))
         conn.commit()
         return jsonify({'success': True})
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
+        conn.rollback()
         return jsonify({'error': 'Бұл сынып коды бұрын қолданылған!'}), 400
     finally:
+        cur.close()
         conn.close()
 
 @app.route('/grade_submission/<int:sub_id>', methods=['POST'])
@@ -337,17 +412,30 @@ def grade_submission(sub_id):
     score = data.get('score')
     comment = data.get('comment', '')
     conn = get_db()
-    sub = conn.execute("SELECT * FROM project_submissions WHERE id = ?", (sub_id,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM project_submissions WHERE id = %s", (sub_id,))
+    sub = cur.fetchone()
     if not sub:
+        cur.close()
         conn.close()
         return jsonify({'error': 'Жүктеме табылмады'}), 404
-    conn.execute("UPDATE project_submissions SET teacher_score = ?, teacher_comment = ?, graded_at = ?, status = 'graded' WHERE id = ?", (score, comment, datetime.now(), sub_id))
+    cur.execute("""
+        UPDATE project_submissions 
+        SET teacher_score = %s, teacher_comment = %s, graded_at = %s, status = 'graded' 
+        WHERE id = %s
+    """, (score, comment, datetime.now(), sub_id))
     student_id = sub['student_id']
-    total_task_score = conn.execute("SELECT COALESCE(SUM(score), 0) FROM student_progress WHERE student_id = ? AND completed = 1", (student_id,)).fetchone()[0]
-    total_project_score = conn.execute("SELECT COALESCE(SUM(teacher_score), 0) FROM project_submissions WHERE student_id = ? AND status = 'graded'", (student_id,)).fetchone()[0]
-    conn.execute("UPDATE students SET total_score = ? WHERE id = ?", (total_task_score + total_project_score, student_id))
-    conn.execute("INSERT INTO notifications (student_id, title, message) VALUES (?, ?, ?)", (student_id, 'Практикалық жоба бағаланды', f'Мұғалім сіздің жобаңызды бағалады: {score}/10. Пікір: {comment}'))
+    cur.execute("SELECT COALESCE(SUM(score), 0) as total FROM student_progress WHERE student_id = %s AND completed = 1", (student_id,))
+    total_task_score = cur.fetchone()['total']
+    cur.execute("SELECT COALESCE(SUM(teacher_score), 0) as total FROM project_submissions WHERE student_id = %s AND status = 'graded'", (student_id,))
+    total_project_score = cur.fetchone()['total']
+    cur.execute("UPDATE students SET total_score = %s WHERE id = %s", (total_task_score + total_project_score, student_id))
+    cur.execute("""
+        INSERT INTO notifications (student_id, title, message) 
+        VALUES (%s, %s, %s)
+    """, (student_id, 'Практикалық жоба бағаланды', f'Мұғалім сіздің жобаңызды бағалады: {score}/10. Пікір: {comment}'))
     conn.commit()
+    cur.close()
     conn.close()
     return jsonify({'success': True})
 
@@ -359,20 +447,28 @@ def register_student():
         class_password = request.form['class_password']
         password = request.form['password']
         conn = get_db()
-        cls = conn.execute("SELECT * FROM classes WHERE class_code = ? AND class_password = ?", (class_code, class_password)).fetchone()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM classes WHERE class_code = %s AND class_password = %s", (class_code, class_password))
+        cls = cur.fetchone()
         if not cls:
             flash('Сынып коды немесе пароль қате!', 'error')
+            cur.close()
             conn.close()
             return render_template('register_student.html')
         hashed = hashlib.sha256(password.encode()).hexdigest()
         try:
-            conn.execute("INSERT INTO students (full_name, class_id, class_password, password) VALUES (?, ?, ?, ?)", (full_name, cls['id'], class_password, hashed))
+            cur.execute("""
+                INSERT INTO students (full_name, class_id, class_password, password) 
+                VALUES (%s, %s, %s, %s)
+            """, (full_name, cls['id'], class_password, hashed))
             conn.commit()
             flash('Оқушы сәтті тіркелді!', 'success')
             return redirect(url_for('login_student'))
         except Exception as e:
+            conn.rollback()
             flash('Тіркеу қатесі!', 'error')
         finally:
+            cur.close()
             conn.close()
     return render_template('register_student.html')
 
@@ -385,7 +481,15 @@ def login_student():
         password = request.form['password']
         hashed = hashlib.sha256(password.encode()).hexdigest()
         conn = get_db()
-        student = conn.execute("SELECT s.*, c.class_name FROM students s JOIN classes c ON s.class_id = c.id WHERE s.full_name = ? AND c.class_code = ? AND s.class_password = ? AND s.password = ?", (full_name, class_code, class_password, hashed)).fetchone()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT s.*, c.class_name 
+            FROM students s 
+            JOIN classes c ON s.class_id = c.id 
+            WHERE s.full_name = %s AND c.class_code = %s AND s.class_password = %s AND s.password = %s
+        """, (full_name, class_code, class_password, hashed))
+        student = cur.fetchone()
+        cur.close()
         conn.close()
         if student:
             session['student_id'] = student['id']
@@ -402,54 +506,104 @@ def student_dashboard():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    student = conn.execute("SELECT * FROM students WHERE id = ?", (session['student_id'],)).fetchone()
-    progress = conn.execute("SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total FROM student_progress WHERE student_id = ? AND completed = 1", (session['student_id'],)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students WHERE id = %s", (session['student_id'],))
+    student = cur.fetchone()
+    cur.execute("""
+        SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total 
+        FROM student_progress 
+        WHERE student_id = %s AND completed = 1
+    """, (session['student_id'],))
+    progress = cur.fetchone()
     progress_percent = (progress['completed'] / progress['total'] * 100) if progress['total'] > 0 else 0
-    badges = conn.execute("SELECT * FROM badges WHERE student_id = ?", (session['student_id'],)).fetchall()
-    leaderboard = conn.execute("SELECT s.full_name, s.xp, s.level, c.class_name FROM students s JOIN classes c ON s.class_id = c.id ORDER BY s.xp DESC LIMIT 10").fetchall()
-    notifications = conn.execute("SELECT * FROM notifications WHERE student_id = ? ORDER BY created_at DESC LIMIT 10", (session['student_id'],)).fetchall()
-    unread_count = conn.execute("SELECT COUNT(*) FROM notifications WHERE student_id = ? AND is_read = 0", (session['student_id'],)).fetchone()[0]
-    topics = conn.execute("SELECT * FROM topics ORDER BY order_num").fetchall()
-    submissions = conn.execute("SELECT ps.*, pp.title as project_title FROM project_submissions ps JOIN practical_projects pp ON ps.project_id = pp.id WHERE ps.student_id = ? ORDER BY ps.submitted_at DESC", (session['student_id'],)).fetchall()
+    cur.execute("SELECT * FROM badges WHERE student_id = %s", (session['student_id'],))
+    badges = cur.fetchall()
+    cur.execute("""
+        SELECT s.full_name, s.xp, s.level, c.class_name 
+        FROM students s 
+        JOIN classes c ON s.class_id = c.id 
+        ORDER BY s.xp DESC LIMIT 10
+    """)
+    leaderboard = cur.fetchall()
+    cur.execute("SELECT * FROM notifications WHERE student_id = %s ORDER BY created_at DESC LIMIT 10", (session['student_id'],))
+    notifications = cur.fetchall()
+    cur.execute("SELECT COUNT(*) as cnt FROM notifications WHERE student_id = %s AND is_read = 0", (session['student_id'],))
+    unread_count = cur.fetchone()['cnt']
+    cur.execute("SELECT * FROM topics ORDER BY order_num")
+    topics = cur.fetchall()
+    cur.execute("""
+        SELECT ps.*, pp.title as project_title 
+        FROM project_submissions ps 
+        JOIN practical_projects pp ON ps.project_id = pp.id 
+        WHERE ps.student_id = %s 
+        ORDER BY ps.submitted_at DESC
+    """, (session['student_id'],))
+    submissions = cur.fetchall()
+    cur.close()
     conn.close()
-    return render_template('student_dashboard.html', student=student, progress=progress_percent, badges=badges, leaderboard=leaderboard, topics=topics, notifications=notifications, unread_count=unread_count, submissions=submissions)
+    return render_template('student_dashboard.html', student=student, progress=progress_percent, 
+                          badges=badges, leaderboard=leaderboard, topics=topics, 
+                          notifications=notifications, unread_count=unread_count, submissions=submissions)
 
 @app.route('/topic/<int:topic_id>')
 def topic_detail(topic_id):
     conn = get_db()
-    topic = conn.execute("SELECT * FROM topics WHERE id = ?", (topic_id,)).fetchone()
-    tasks = conn.execute("SELECT * FROM tasks WHERE topic_id = ? ORDER BY order_num", (topic_id,)).fetchall()
-    projects = conn.execute("SELECT * FROM practical_projects WHERE topic_id = ? ORDER BY order_num", (topic_id,)).fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM topics WHERE id = %s", (topic_id,))
+    topic = cur.fetchone()
+    cur.execute("SELECT * FROM tasks WHERE topic_id = %s ORDER BY order_num", (topic_id,))
+    tasks = cur.fetchall()
+    cur.execute("SELECT * FROM practical_projects WHERE topic_id = %s ORDER BY order_num", (topic_id,))
+    projects = cur.fetchall()
     task_progress = {}
     project_submissions = {}
     all_tasks_completed = False
     if 'student_id' in session and session.get('user_type') == 'student':
         for task in tasks:
-            prog = conn.execute("SELECT * FROM student_progress WHERE student_id = ? AND task_id = ?", (session['student_id'], task['id'])).fetchone()
+            cur.execute("SELECT * FROM student_progress WHERE student_id = %s AND task_id = %s", 
+                       (session['student_id'], task['id']))
+            prog = cur.fetchone()
             task_progress[task['id']] = prog
         for project in projects:
-            sub = conn.execute("SELECT * FROM project_submissions WHERE student_id = ? AND project_id = ?", (session['student_id'], project['id'])).fetchone()
+            cur.execute("SELECT * FROM project_submissions WHERE student_id = %s AND project_id = %s", 
+                       (session['student_id'], project['id']))
+            sub = cur.fetchone()
             project_submissions[project['id']] = sub
-        completed_count = conn.execute("SELECT COUNT(*) FROM student_progress WHERE student_id = ? AND task_id IN (SELECT id FROM tasks WHERE topic_id = ?) AND completed = 1", (session['student_id'], topic_id)).fetchone()[0]
+        cur.execute("""
+            SELECT COUNT(*) FROM student_progress 
+            WHERE student_id = %s AND task_id IN (SELECT id FROM tasks WHERE topic_id = %s) AND completed = 1
+        """, (session['student_id'], topic_id))
+        completed_count = cur.fetchone()['count']
         all_tasks_completed = completed_count >= len(tasks)
+    cur.close()
     conn.close()
-    return render_template('topic.html', topic=topic, tasks=tasks, projects=projects, task_progress=task_progress, project_submissions=project_submissions, all_tasks_completed=all_tasks_completed)
+    return render_template('topic.html', topic=topic, tasks=tasks, projects=projects, 
+                          task_progress=task_progress, project_submissions=project_submissions, 
+                          all_tasks_completed=all_tasks_completed)
 
 @app.route('/project/<int:project_id>')
 def project_detail(project_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    project = conn.execute("SELECT * FROM practical_projects WHERE id = ?", (project_id,)).fetchone()
-    topic = conn.execute("SELECT * FROM topics WHERE id = ?", (project['topic_id'],)).fetchone()
-    submission = conn.execute("SELECT * FROM project_submissions WHERE student_id = ? AND project_id = ?", (session['student_id'], project_id)).fetchone()
-    conn.close()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM practical_projects WHERE id = %s", (project_id,))
+    project = cur.fetchone()
     if not project:
+        cur.close()
+        conn.close()
         flash('Жоба табылмады!', 'error')
         return redirect(url_for('student_dashboard'))
+    cur.execute("SELECT * FROM topics WHERE id = %s", (project['topic_id'],))
+    topic = cur.fetchone()
+    cur.execute("SELECT * FROM project_submissions WHERE student_id = %s AND project_id = %s", 
+               (session['student_id'], project_id))
+    submission = cur.fetchone()
+    cur.close()
+    conn.close()
     return render_template('project.html', project=project, topic=topic, submission=submission)
 
-# ===== ЕСКІ ЖҮКТЕУ (бұрынғыдай жұмыс істей береді) =====
+# Ескі жүктеу (бұрынғыдай жұмыс істей береді)
 @app.route('/upload_project/<int:project_id>', methods=['POST'])
 def upload_project(project_id):
     if 'student_id' not in session:
@@ -460,32 +614,45 @@ def upload_project(project_id):
     if file.filename == '':
         return jsonify({'error': 'Файл таңдалмады'}), 400
     conn = get_db()
-    project = conn.execute("SELECT * FROM practical_projects WHERE id = ?", (project_id,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM practical_projects WHERE id = %s", (project_id,))
+    project = cur.fetchone()
     if not project:
+        cur.close()
         conn.close()
         return jsonify({'error': 'Жоба табылмады'}), 404
     topic_id = project['topic_id']
+    cur.close()
     conn.close()
     if file and file.filename.endswith('.blend'):
         filename = f"student_{session['student_id']}_project_{project_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.blend"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         conn = get_db()
-        conn.execute("DELETE FROM project_submissions WHERE student_id = ? AND project_id = ?", (session['student_id'], project_id))
-        conn.execute("INSERT INTO project_submissions (student_id, project_id, topic_id, filename, filepath) VALUES (?, ?, ?, ?, ?)", (session['student_id'], project_id, topic_id, filename, filepath))
+        cur = conn.cursor()
+        cur.execute("DELETE FROM project_submissions WHERE student_id = %s AND project_id = %s", 
+                   (session['student_id'], project_id))
+        cur.execute("""
+            INSERT INTO project_submissions (student_id, project_id, topic_id, filename, filepath) 
+            VALUES (%s, %s, %s, %s, %s)
+        """, (session['student_id'], project_id, topic_id, filename, filepath))
         conn.commit()
+        cur.close()
         conn.close()
         return jsonify({'success': True, 'message': 'Жоба сәтті жүктелді!'})
     return jsonify({'error': 'Тек .blend файлы жүктеуге рұқсат етіледі'}), 400
 
-# ===== ЖАҢА: 3 ФОРМАТ БОЙЫНША ЖҮКТЕУ API =====
+# Жаңа: 3 формат бойынша жүктеу API
 @app.route('/api/upload_project/<int:project_id>', methods=['POST'])
 def upload_project_files(project_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return jsonify({'error': 'Кіру қажет'}), 401
     conn = get_db()
-    project = conn.execute("SELECT * FROM practical_projects WHERE id = ?", (project_id,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM practical_projects WHERE id = %s", (project_id,))
+    project = cur.fetchone()
     if not project:
+        cur.close()
         conn.close()
         return jsonify({'error': 'Жоба табылмады'}), 404
     topic_id = project['topic_id']
@@ -494,7 +661,11 @@ def upload_project_files(project_id):
     errors = []
     for format_type in ['blend', 'pdf', 'pptx']:
         files = request.files.getlist(format_type + '_files[]')
-        existing_count = conn.execute("SELECT COUNT(*) FROM project_submissions WHERE student_id = ? AND project_id = ? AND file_format = ?", (student_id, project_id, format_type)).fetchone()[0]
+        cur.execute("""
+            SELECT COUNT(*) as cnt FROM project_submissions 
+            WHERE student_id = %s AND project_id = %s AND file_format = %s
+        """, (student_id, project_id, format_type))
+        existing_count = cur.fetchone()['cnt']
         for file in files:
             if not file or not file.filename:
                 continue
@@ -516,13 +687,18 @@ def upload_project_files(project_id):
             filename = f"student_{student_id}_project_{project_id}_{format_type}_{timestamp}_{original_name}"
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            conn.execute("INSERT INTO project_submissions (student_id, project_id, topic_id, filename, filepath, file_format, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')", (student_id, project_id, topic_id, original_name, filepath, format_type))
+            cur.execute("""
+                INSERT INTO project_submissions (student_id, project_id, topic_id, filename, filepath, file_format, status) 
+                VALUES (%s, %s, %s, %s, %s, %s, 'pending')
+            """, (student_id, project_id, topic_id, original_name, filepath, format_type))
             saved_files.append({'filename': original_name, 'format': format_type, 'size': file_size})
             existing_count += 1
     conn.commit()
+    cur.close()
     conn.close()
     if saved_files:
-        return jsonify({'success': True, 'message': f'{len(saved_files)} файл сәтті жүктелді!', 'files': saved_files, 'errors': errors if errors else None})
+        return jsonify({'success': True, 'message': f'{len(saved_files)} файл сәтті жүктелді!', 
+                       'files': saved_files, 'errors': errors if errors else None})
     else:
         return jsonify({'success': False, 'error': 'Ешқандай файл жүктелмеді', 'details': errors}), 400
 
@@ -531,14 +707,18 @@ def delete_submission(sub_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return jsonify({'error': 'Кіру қажет'}), 401
     conn = get_db()
-    sub = conn.execute("SELECT * FROM project_submissions WHERE id = ? AND student_id = ?", (sub_id, session['student_id'])).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM project_submissions WHERE id = %s AND student_id = %s", (sub_id, session['student_id']))
+    sub = cur.fetchone()
     if not sub:
+        cur.close()
         conn.close()
         return jsonify({'error': 'Жүктеме табылмады немесе рұқсат жоқ'}), 404
     if sub['filepath'] and os.path.exists(sub['filepath']):
         os.remove(sub['filepath'])
-    conn.execute("DELETE FROM project_submissions WHERE id = ?", (sub_id,))
+    cur.execute("DELETE FROM project_submissions WHERE id = %s", (sub_id,))
     conn.commit()
+    cur.close()
     conn.close()
     return jsonify({'success': True, 'message': 'Файл өшірілді'})
 
@@ -547,13 +727,25 @@ def my_submissions(project_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return jsonify({'error': 'Кіру қажет'}), 401
     conn = get_db()
-    submissions = conn.execute("SELECT id, filename, file_format, status, teacher_score, teacher_comment, graded_at, submitted_at FROM project_submissions WHERE student_id = ? AND project_id = ? ORDER BY file_format, submitted_at DESC", (session['student_id'], project_id)).fetchall()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, filename, file_format, status, teacher_score, teacher_comment, graded_at, submitted_at 
+        FROM project_submissions 
+        WHERE student_id = %s AND project_id = %s 
+        ORDER BY file_format, submitted_at DESC
+    """, (session['student_id'], project_id))
+    submissions = cur.fetchall()
+    cur.close()
     conn.close()
     result = {'blend': [], 'pdf': [], 'pptx': []}
     for sub in submissions:
         fmt = sub['file_format']
         if fmt in result:
-            result[fmt].append({'id': sub['id'], 'filename': sub['filename'], 'status': sub['status'], 'score': sub['teacher_score'], 'comment': sub['teacher_comment'], 'graded_at': sub['graded_at'], 'submitted_at': sub['submitted_at']})
+            result[fmt].append({
+                'id': sub['id'], 'filename': sub['filename'], 'status': sub['status'],
+                'score': sub['teacher_score'], 'comment': sub['teacher_comment'],
+                'graded_at': sub['graded_at'], 'submitted_at': sub['submitted_at']
+            })
     return jsonify({'success': True, 'submissions': result})
 
 @app.route('/submit_task', methods=['POST'])
@@ -564,8 +756,11 @@ def submit_task():
     task_id = data.get('task_id')
     answer = data.get('answer')
     conn = get_db()
-    task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tasks WHERE id = %s", (task_id,))
+    task = cur.fetchone()
     if not task:
+        cur.close()
         conn.close()
         return jsonify({'error': 'Тапсырма табылмады'}), 404
     is_correct = False
@@ -574,25 +769,46 @@ def submit_task():
     if answer.strip().lower() == correct.strip().lower():
         is_correct = True
         score = task['points']
-    existing = conn.execute("SELECT * FROM student_progress WHERE student_id = ? AND task_id = ?", (session['student_id'], task_id)).fetchone()
+    cur.execute("SELECT * FROM student_progress WHERE student_id = %s AND task_id = %s", 
+               (session['student_id'], task_id))
+    existing = cur.fetchone()
     if existing:
-        conn.execute("UPDATE student_progress SET completed = ?, score = ?, completed_at = ? WHERE id = ?", (1 if is_correct else 0, score, datetime.now(), existing['id']))
+        cur.execute("""
+            UPDATE student_progress 
+            SET completed = %s, score = %s, completed_at = %s 
+            WHERE id = %s
+        """, (1 if is_correct else 0, score, datetime.now(), existing['id']))
     else:
-        conn.execute("INSERT INTO student_progress (student_id, task_id, completed, score, completed_at) VALUES (?, ?, ?, ?, ?)", (session['student_id'], task_id, 1 if is_correct else 0, score, datetime.now()))
+        cur.execute("""
+            INSERT INTO student_progress (student_id, task_id, completed, score, completed_at) 
+            VALUES (%s, %s, %s, %s, %s)
+        """, (session['student_id'], task_id, 1 if is_correct else 0, score, datetime.now()))
     if is_correct:
-        conn.execute("UPDATE students SET xp = xp + ? WHERE id = ?", (score, session['student_id']))
-        total_xp = conn.execute("SELECT xp FROM students WHERE id = ?", (session['student_id'],)).fetchone()['xp']
+        cur.execute("UPDATE students SET xp = xp + %s WHERE id = %s", (score, session['student_id']))
+        cur.execute("SELECT xp FROM students WHERE id = %s", (session['student_id'],))
+        total_xp = cur.fetchone()['xp']
         new_level = (total_xp // 100) + 1
-        conn.execute("UPDATE students SET level = ? WHERE id = ?", (new_level, session['student_id']))
-        badges_to_check = [(50, 'Бастаушы', 'star'), (100, '3D модельдеуші', 'cube'), (200, 'Аниматор', 'film'), (300, 'Профессионал', 'trophy'), (500, '3D шебер', 'crown'), (750, 'Blender шебері', 'gem'), (1000, '3D Гуру', 'award')]
+        cur.execute("UPDATE students SET level = %s WHERE id = %s", (new_level, session['student_id']))
+        badges_to_check = [
+            (50, 'Бастаушы', 'star'), (100, '3D модельдеуші', 'cube'), (200, 'Аниматор', 'film'),
+            (300, 'Профессионал', 'trophy'), (500, '3D шебер', 'crown'), (750, 'Blender шебері', 'gem'),
+            (1000, '3D Гуру', 'award')
+        ]
         for xp_needed, badge_name, badge_icon in badges_to_check:
             if total_xp >= xp_needed:
-                existing_badge = conn.execute("SELECT * FROM badges WHERE student_id = ? AND badge_name = ?", (session['student_id'], badge_name)).fetchone()
+                cur.execute("SELECT * FROM badges WHERE student_id = %s AND badge_name = %s", 
+                           (session['student_id'], badge_name))
+                existing_badge = cur.fetchone()
                 if not existing_badge:
-                    conn.execute("INSERT INTO badges (student_id, badge_name, badge_icon) VALUES (?, ?, ?)", (session['student_id'], badge_name, badge_icon))
+                    cur.execute("INSERT INTO badges (student_id, badge_name, badge_icon) VALUES (%s, %s, %s)", 
+                               (session['student_id'], badge_name, badge_icon))
     conn.commit()
+    cur.close()
     conn.close()
-    return jsonify({'correct': is_correct, 'score': score, 'message': 'Дұрыс! Керемет!' if is_correct else 'Қате! Дұрыс жауап: ' + task['correct_answer']})
+    return jsonify({
+        'correct': is_correct, 'score': score,
+        'message': 'Дұрыс! Керемет!' if is_correct else 'Қате! Дұрыс жауап: ' + task['correct_answer']
+    })
 
 @app.route('/download/<path:filename>')
 def download_file(filename):
@@ -605,27 +821,57 @@ def my_grades():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    student = conn.execute("SELECT * FROM students WHERE id = ?", (session['student_id'],)).fetchone()
-    task_grades = conn.execute("SELECT t.question, t.task_type, sp.score, t.points, t.order_num, tp.title as topic_title FROM student_progress sp JOIN tasks t ON sp.task_id = t.id JOIN topics tp ON t.topic_id = tp.id WHERE sp.student_id = ? AND sp.completed = 1 ORDER BY tp.order_num, t.order_num", (session['student_id'],)).fetchall()
-    project_grades = conn.execute("SELECT ps.*, pp.title as project_title FROM project_submissions ps JOIN practical_projects pp ON ps.project_id = pp.id WHERE ps.student_id = ? AND ps.status = 'graded' ORDER BY ps.graded_at DESC", (session['student_id'],)).fetchall()
-    total_task_score = conn.execute("SELECT COALESCE(SUM(score), 0) FROM student_progress WHERE student_id = ? AND completed = 1", (session['student_id'],)).fetchone()[0]
-    total_project_score = conn.execute("SELECT COALESCE(SUM(teacher_score), 0) FROM project_submissions WHERE student_id = ? AND status = 'graded'", (session['student_id'],)).fetchone()[0]
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students WHERE id = %s", (session['student_id'],))
+    student = cur.fetchone()
+    cur.execute("""
+        SELECT t.question, t.task_type, sp.score, t.points, t.order_num, tp.title as topic_title 
+        FROM student_progress sp 
+        JOIN tasks t ON sp.task_id = t.id 
+        JOIN topics tp ON t.topic_id = tp.id 
+        WHERE sp.student_id = %s AND sp.completed = 1 
+        ORDER BY tp.order_num, t.order_num
+    """, (session['student_id'],))
+    task_grades = cur.fetchall()
+    cur.execute("""
+        SELECT ps.*, pp.title as project_title 
+        FROM project_submissions ps 
+        JOIN practical_projects pp ON ps.project_id = pp.id 
+        WHERE ps.student_id = %s AND ps.status = 'graded' 
+        ORDER BY ps.graded_at DESC
+    """, (session['student_id'],))
+    project_grades = cur.fetchall()
+    cur.execute("SELECT COALESCE(SUM(score), 0) as total FROM student_progress WHERE student_id = %s AND completed = 1", 
+               (session['student_id'],))
+    total_task_score = cur.fetchone()['total']
+    cur.execute("SELECT COALESCE(SUM(teacher_score), 0) as total FROM project_submissions WHERE student_id = %s AND status = 'graded'", 
+               (session['student_id'],))
+    total_project_score = cur.fetchone()['total']
     total_score = total_task_score + total_project_score
-    total_tasks = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
-    total_projects = conn.execute("SELECT COUNT(*) FROM practical_projects").fetchone()[0]
+    cur.execute("SELECT COUNT(*) as cnt FROM tasks")
+    total_tasks = cur.fetchone()['cnt']
+    cur.execute("SELECT COUNT(*) as cnt FROM practical_projects")
+    total_projects = cur.fetchone()['cnt']
     max_possible = (total_tasks * 10) + (total_projects * 10)
     avg_percent = (total_score / max_possible * 100) if max_possible > 0 else 0
+    cur.close()
     conn.close()
-    return render_template('my_grades.html', student=student, task_grades=task_grades, project_grades=project_grades, total_score=total_score, total_task_score=total_task_score, total_project_score=total_project_score, avg_percent=round(avg_percent, 1))
+    return render_template('my_grades.html', student=student, task_grades=task_grades, 
+                          project_grades=project_grades, total_score=total_score,
+                          total_task_score=total_task_score, total_project_score=total_project_score,
+                          avg_percent=round(avg_percent, 1))
 
 @app.route('/notifications')
 def notifications():
     if 'student_id' not in session:
         return redirect(url_for('login_student'))
     conn = get_db()
-    notifs = conn.execute("SELECT * FROM notifications WHERE student_id = ? ORDER BY created_at DESC", (session['student_id'],)).fetchall()
-    conn.execute("UPDATE notifications SET is_read = 1 WHERE student_id = ?", (session['student_id'],))
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM notifications WHERE student_id = %s ORDER BY created_at DESC", (session['student_id'],))
+    notifs = cur.fetchall()
+    cur.execute("UPDATE notifications SET is_read = 1 WHERE student_id = %s", (session['student_id'],))
     conn.commit()
+    cur.close()
     conn.close()
     return render_template('notifications.html', notifications=notifs)
 
@@ -634,44 +880,72 @@ def certificate():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    student = conn.execute("SELECT * FROM students WHERE id = ?", (session['student_id'],)).fetchone()
-    progress = conn.execute("SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total FROM student_progress WHERE student_id = ? AND completed = 1", (session['student_id'],)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students WHERE id = %s", (session['student_id'],))
+    student = cur.fetchone()
+    cur.execute("""
+        SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total 
+        FROM student_progress 
+        WHERE student_id = %s AND completed = 1
+    """, (session['student_id'],))
+    progress = cur.fetchone()
     progress_percent = (progress['completed'] / progress['total'] * 100) if progress['total'] > 0 else 0
-    project_count = conn.execute("SELECT COUNT(*) FROM project_submissions WHERE student_id = ? AND status = 'graded'", (session['student_id'],)).fetchone()[0]
-    total_projects = conn.execute("SELECT COUNT(*) FROM practical_projects").fetchone()[0]
+    cur.execute("SELECT COUNT(*) as cnt FROM project_submissions WHERE student_id = %s AND status = 'graded'", 
+               (session['student_id'],))
+    project_count = cur.fetchone()['cnt']
+    cur.execute("SELECT COUNT(*) as cnt FROM practical_projects")
+    total_projects = cur.fetchone()['cnt']
     project_percent = (project_count / total_projects * 100) if total_projects > 0 else 0
     overall_progress = (progress_percent + project_percent) / 2
-    badges = conn.execute("SELECT * FROM badges WHERE student_id = ?", (session['student_id'],)).fetchall()
-    cert = conn.execute("SELECT * FROM certificates WHERE student_id = ?", (session['student_id'],)).fetchone()
+    cur.execute("SELECT * FROM badges WHERE student_id = %s", (session['student_id'],))
+    badges = cur.fetchall()
+    cur.execute("SELECT * FROM certificates WHERE student_id = %s", (session['student_id'],))
+    cert = cur.fetchone()
     cert_code = None
     if overall_progress >= 80:
         if not cert:
             cert_code = f"BL3D-{session['student_id']}-{datetime.now().strftime('%Y%m%d')}"
-            conn.execute("INSERT INTO certificates (student_id, certificate_code) VALUES (?, ?)", (session['student_id'], cert_code))
+            cur.execute("INSERT INTO certificates (student_id, certificate_code) VALUES (%s, %s)", 
+                       (session['student_id'], cert_code))
             conn.commit()
         else:
             cert_code = cert['certificate_code']
+    cur.close()
     conn.close()
-    return render_template('certificate.html', student=student, progress=overall_progress, badges=badges, now=datetime.now(), cert_code=cert_code, task_progress=progress_percent, project_progress=project_percent)
+    return render_template('certificate.html', student=student, progress=overall_progress, 
+                          badges=badges, now=datetime.now(), cert_code=cert_code,
+                          task_progress=progress_percent, project_progress=project_percent)
 
 @app.route('/api/stats')
 def api_stats():
     try:
         conn = get_db()
+        cur = conn.cursor()
         today = datetime.now().strftime('%Y-%m-%d')
         last_week = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-        teachers = conn.execute("SELECT COUNT(*) as count FROM teachers").fetchone()['count']
-        students = conn.execute("SELECT COUNT(*) as count FROM students").fetchone()['count']
+        cur.execute("SELECT COUNT(*) as cnt FROM teachers")
+        teachers = cur.fetchone()['cnt']
+        cur.execute("SELECT COUNT(*) as cnt FROM students")
+        students = cur.fetchone()['cnt']
         total = teachers + students
-        new_teachers_today = conn.execute("SELECT COUNT(*) as count FROM teachers WHERE DATE(created_at) = ?", (today,)).fetchone()['count']
-        new_students_today = conn.execute("SELECT COUNT(*) as count FROM students WHERE DATE(created_at) = ?", (today,)).fetchone()['count']
-        teachers_last_week = conn.execute("SELECT COUNT(*) as count FROM teachers WHERE DATE(created_at) >= ?", (last_week,)).fetchone()['count']
-        students_last_week = conn.execute("SELECT COUNT(*) as count FROM students WHERE DATE(created_at) >= ?", (last_week,)).fetchone()['count']
+        cur.execute("SELECT COUNT(*) as cnt FROM teachers WHERE DATE(created_at) = %s", (today,))
+        new_teachers_today = cur.fetchone()['cnt']
+        cur.execute("SELECT COUNT(*) as cnt FROM students WHERE DATE(created_at) = %s", (today,))
+        new_students_today = cur.fetchone()['cnt']
+        cur.execute("SELECT COUNT(*) as cnt FROM teachers WHERE DATE(created_at) >= %s", (last_week,))
+        teachers_last_week = cur.fetchone()['cnt']
+        cur.execute("SELECT COUNT(*) as cnt FROM students WHERE DATE(created_at) >= %s", (last_week,))
+        students_last_week = cur.fetchone()['cnt']
         growth_percent = 0
         if total > 0:
             growth_percent = round(((teachers_last_week + students_last_week) / total) * 100, 1)
+        cur.close()
         conn.close()
-        return jsonify({'success': True, 'teachers': teachers, 'students': students, 'total': total, 'new_teachers_today': new_teachers_today, 'new_students_today': new_students_today, 'growth_percent': growth_percent, 'last_updated': datetime.now().strftime('%H:%M:%S')})
+        return jsonify({
+            'success': True, 'teachers': teachers, 'students': students, 'total': total,
+            'new_teachers_today': new_teachers_today, 'new_students_today': new_students_today,
+            'growth_percent': growth_percent, 'last_updated': datetime.now().strftime('%H:%M:%S')
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'teachers': 0, 'students': 0}), 500
 
@@ -701,8 +975,11 @@ def api_chat():
             response = resp
             break
     conn = get_db()
-    conn.execute("INSERT INTO chat_messages (user_id, user_type, message, response) VALUES (?, ?, ?, ?)", (user_id, user_type, message, response))
+    cur = conn.cursor()
+    cur.execute("INSERT INTO chat_messages (user_id, user_type, message, response) VALUES (%s, %s, %s, %s)", 
+               (user_id, user_type, message, response))
     conn.commit()
+    cur.close()
     conn.close()
     return jsonify({'response': response})
 
@@ -711,15 +988,32 @@ def practice():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    tasks = conn.execute("SELECT t.*, tp.title as topic_title FROM tasks t JOIN topics tp ON t.topic_id = tp.id ORDER BY tp.order_num, t.order_num").fetchall()
-    progress_data = conn.execute("SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total, COALESCE(SUM(score), 0) as total_xp FROM student_progress WHERE student_id = ? AND completed = 1", (session['student_id'],)).fetchone()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT t.*, tp.title as topic_title 
+        FROM tasks t 
+        JOIN topics tp ON t.topic_id = tp.id 
+        ORDER BY tp.order_num, t.order_num
+    """)
+    tasks = cur.fetchall()
+    cur.execute("""
+        SELECT COUNT(*) as completed, (SELECT COUNT(*) FROM tasks) as total, COALESCE(SUM(score), 0) as total_xp 
+        FROM student_progress 
+        WHERE student_id = %s AND completed = 1
+    """, (session['student_id'],))
+    progress_data = cur.fetchone()
     progress = (progress_data['completed'] / progress_data['total'] * 100) if progress_data['total'] > 0 else 0
     task_progress = {}
     for task in tasks:
-        prog = conn.execute("SELECT * FROM student_progress WHERE student_id = ? AND task_id = ?", (session['student_id'], task['id'])).fetchone()
+        cur.execute("SELECT * FROM student_progress WHERE student_id = %s AND task_id = %s", 
+                   (session['student_id'], task['id']))
+        prog = cur.fetchone()
         task_progress[task['id']] = prog
+    cur.close()
     conn.close()
-    return render_template('practice.html', tasks=tasks, task_progress=task_progress, progress=progress, completed_count=progress_data['completed'], total_tasks=progress_data['total'], total_xp=progress_data['total_xp'])
+    return render_template('practice.html', tasks=tasks, task_progress=task_progress, progress=progress,
+                          completed_count=progress_data['completed'], total_tasks=progress_data['total'],
+                          total_xp=progress_data['total_xp'])
 
 @app.route('/save_student_project', methods=['POST'])
 def save_student_project():
@@ -732,21 +1026,7 @@ def save_student_project():
     if not title:
         return jsonify({'error': 'Жоба атауын енгізіңіз'}), 400
     conn = get_db()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS student_projects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            project_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            description TEXT,
-            tools TEXT,
-            screenshot1 TEXT,
-            screenshot2 TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students(id),
-            FOREIGN KEY (project_id) REFERENCES practical_projects(id)
-        )
-    """)
+    cur = conn.cursor()
     screenshot1_path = None
     screenshot2_path = None
     if 'screenshot1' in request.files:
@@ -763,8 +1043,12 @@ def save_student_project():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             screenshot2_path = filename
-    conn.execute("INSERT INTO student_projects (student_id, project_id, title, description, tools, screenshot1, screenshot2) VALUES (?, ?, ?, ?, ?, ?, ?)", (session['student_id'], project_id, title, description, tools, screenshot1_path, screenshot2_path))
+    cur.execute("""
+        INSERT INTO student_projects (student_id, project_id, title, description, tools, screenshot1, screenshot2) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (session['student_id'], project_id, title, description, tools, screenshot1_path, screenshot2_path))
     conn.commit()
+    cur.close()
     conn.close()
     return jsonify({'success': True, 'message': 'Жоба сәтті сақталды!'})
 
