@@ -190,6 +190,26 @@
             transform: translateY(-2px);
         }
 
+        /* АДМИН СІЛТЕМЕСІНІҢ СТИЛІ */
+        .admin-link {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: white !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            margin-left: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .admin-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+            background: linear-gradient(135deg, #ff6b6b, #e94560) !important;
+        }
+
         .theme-toggle {
             background: none;
             border: 2px solid white;
@@ -468,25 +488,6 @@
             gap: 0.5rem;
         }
 
-.admin-link {
-    background: linear-gradient(135deg, #e94560, #ff6b6b);
-    color: white !important;
-    padding: 8px 16px;
-    border-radius: 8px;
-    margin-left: 10px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.admin-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
-}
-
-.admin-link i {
-    margin-right: 6px;
-}
-        
         .chat-input {
             flex: 1;
             padding: 0.8rem;
@@ -520,6 +521,7 @@
 <base target="_blank">
 </head>
 <body>
+    <!-- НАВИГАЦИЯ - ТЕК БІР ЖЕРДЕ -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="logo">
@@ -528,6 +530,14 @@
             </a>
             <div class="nav-links">
                 <a href="/">Басты бет</a>
+                <a href="/courses">Курстар</a>
+                <a href="/about">Біз туралы</a>
+                
+                <!-- ӘКІМШІ СІЛТЕМЕСІ -->
+                <a href="/admin" class="admin-link">
+                    <i class="fas fa-shield-alt"></i> Әкімші
+                </a>
+                
                 {% if session.get('user_type') == 'teacher' %}
                     <a href="/teacher_dashboard">Мұғалім панелі</a>
                     <a href="/logout" class="btn btn-outline">Шығу</a>
@@ -535,14 +545,18 @@
                     <a href="/student_dashboard">Оқушы панелі</a>
                     <a href="/practice">Интерактивті тапсырмалар</a>
                     <a href="/my_grades">Бағаларым</a>
-                    <a href="/notifications">Хабарламалар {% if unread_count > 0 %}<span class="notif-badge-nav">{{ unread_count }}</span>{% endif %}</a>
+                    <a href="/notifications">Хабарламалар {% if unread_count > 0 %}<<span class="notif-badge-nav">{{ unread_count }}</span>{% endif %}</a>
                     <a href="/certificate">Сертификат</a>
                     <a href="/logout" class="btn btn-outline">Шығу</a>
                 {% else %}
                     <a href="/login_teacher">Мұғалім</a>
                     <a href="/login_student">Оқушы</a>
                 {% endif %}
-
+                
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                    <span id="themeText">Dark</span>
+                </button>
             </div>
         </div>
     </nav>
@@ -558,46 +572,6 @@
 
         {% block content %}{% endblock %}
     </div>
-
-   <!-- НАВИГАЦИЯ - басты беттің header бөліміне қосу -->
-<nav class="main-nav">
-    <div class="nav-logo">
-        <i class="fas fa-cube"></i>
-        <span>Blender 3D Academy</span>
-    </div>
-    
-    <div class="nav-links">
-        <a href="/" class="nav-link active">
-            <i class="fas fa-home"></i> Басты бет
-        </a>
-        <a href="/courses" class="nav-link">
-            <i class="fas fa-book"></i> Курстар
-        </a>
-        <a href="/about" class="nav-link">
-            <i class="fas fa-info-circle"></i> Біз туралы
-        </a>
-        
-        <!-- ӘКІМШІ сілтемесі - басты беттен админ панеліне өту -->
-        <a href="/admin" class="nav-link admin-link">
-            <i class="fas fa-shield-alt"></i> 
-            <span>Әкімші</span>
-        </a>
-    </div>
-    
-    <div class="nav-auth">
-        {% if current_user.is_authenticated %}
-            <a href="/profile" class="nav-link">
-                <i class="fas fa-user"></i> {{ current_user.name }}
-            </a>
-            <a href="/logout" class="btn btn-outline">
-                <i class="fas fa-sign-out-alt"></i> Шығу
-            </a>
-        {% else %}
-            <a href="/login" class="btn btn-outline">Кіру</a>
-            <a href="/register" class="btn btn-primary">Тіркелу</a>
-        {% endif %}
-    </div>
-</nav> 
     
     <!-- AI Chat Widget -->
     <div class="chat-widget">
@@ -747,7 +721,7 @@
                 'frame': 'Frame (кадр) — анимацияның уақыт бірлігі. Стандартты кадр жылдамдығы: 24 fps (кино), 30 fps (NTSC), 25 fps (PAL), 60 fps (ойындар). Frame = уақыт × fps.',
                 'dope sheet': 'Dope Sheet — анимацияның барлық keyframe-терінің шолу кестесі. Барлық объектілердің анимация уақытын бір уақытта көруге және өңдеуге болады.',
                 'graph editor': 'Graph Editor — анимация қисықтарын визуалды өңдеу. Bezier, Linear, Constant интерполяция түрлері. Keyframe-терді жылжыту, қисық пішінін өзгерту мүмкіндіктері бар.',
-                'shape keys': 'Shape Keys (мorph targets) — объектінің пішінін өзгерту. Basis (негізгі) және Key 1, Key 2 (қосымша) пішіндері. Value параметрі (0-1) аралықта интерполяцияланады.',
+                'shape keys': 'Shape Keys (morph targets) — объектінің пішінін өзгерту. Basis (негізгі) және Key 1, Key 2 (қосымша) пішіндері. Value параметрі (0-1) аралықта интерполяцияланады.',
                 'path animation': 'Path Animation — объектіні қисық бойымен қозғалту. Curve таңдап, Curve Properties → Path Animation қосу. Объектіні Curve-ге Follow Path constraint арқылы байлау.',
                 'follow path': 'Follow Path Constraint — объектіні қисық бойымен қозғалту. Объектіні таңдап, Constraints → Follow Path → Curve таңдау. Offset параметрі қозғалыс уақытын реттейді.',
                 'constraints': 'Constraints — объектілердің қозғалысын шектеу немесе басқару құралдары. Follow Path, Track To, Copy Location, Limit Location сияқты түрлері бар. Properties панелінің Constraint Properties бөлімінде қосылады.',
