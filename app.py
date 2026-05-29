@@ -14,6 +14,7 @@ def get_db():
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
 UPLOAD_FOLDER = 'uploads'
+
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -27,7 +28,7 @@ def get_unread_count():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT COUNT(*) as cnt FROM notifications WHERE student_id = %s AND is_read = 0", (session['student_id'],))
         result = cur.fetchone()
-        count = result['cnt'] if result else 0  # ✅ ДҰРЫС
+        count = result['cnt'] if result else 0
         cur.close()
         conn.close()
         return count
@@ -47,8 +48,7 @@ def init_db():
     cur = conn.cursor()
 
     # Таблицаларды құру
-    tables = [
-        """
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS teachers (
             id SERIAL PRIMARY KEY,
             full_name VARCHAR(255) NOT NULL,
@@ -56,8 +56,9 @@ def init_db():
             password VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS classes (
             id SERIAL PRIMARY KEY,
             teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
@@ -66,8 +67,9 @@ def init_db():
             class_password VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS students (
             id SERIAL PRIMARY KEY,
             full_name VARCHAR(255) NOT NULL,
@@ -79,8 +81,9 @@ def init_db():
             total_score INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS topics (
             id SERIAL PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
@@ -90,8 +93,9 @@ def init_db():
             practical_guide TEXT,
             order_num INTEGER DEFAULT 0
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS practical_projects (
             id SERIAL PRIMARY KEY,
             topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
@@ -102,8 +106,9 @@ def init_db():
             criteria TEXT,
             order_num INTEGER DEFAULT 0
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id SERIAL PRIMARY KEY,
             topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
@@ -114,8 +119,9 @@ def init_db():
             points INTEGER DEFAULT 10,
             order_num INTEGER DEFAULT 0
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS student_progress (
             id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -125,8 +131,9 @@ def init_db():
             completed_at TIMESTAMP,
             UNIQUE(student_id, task_id)
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS badges (
             id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -134,8 +141,9 @@ def init_db():
             badge_icon VARCHAR(50),
             earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
@@ -144,8 +152,9 @@ def init_db():
             response TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS project_submissions (
             id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -160,8 +169,9 @@ def init_db():
             graded_at TIMESTAMP DEFAULT NULL,
             status VARCHAR(50) DEFAULT 'pending'
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS notifications (
             id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -170,16 +180,18 @@ def init_db():
             is_read INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS certificates (
             id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
             certificate_code VARCHAR(255) UNIQUE NOT NULL,
             generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """,
-        """
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS student_projects (
             id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -191,15 +203,11 @@ def init_db():
             screenshot2 VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """
-    ]
-    
-    for table_sql in tables:
-        cur.execute(table_sql)
+    """)
 
     # Бастапқы деректер
     cur.execute("SELECT COUNT(*) FROM topics")
-    if cur.fetchone()[0] == 0:  # ✅ ДҰРЫС [0]
+    if cur.fetchone()[0] == 0:
         topics_data = [
             ("§1. Интерфейс және негізгі құралдар", "Blender бағдарламасының интерфейсімен танысу", "https://youtu.be/GVy2Gpi81rU",
              "Blender — ашық бастапқы коды бар 3D компьютерлік графика бағдарламасы. Ол 3D модельдеу, анимация, рендеринг, видео монтаж және т.б. мүмкіндіктерді қамтиды.",
@@ -229,7 +237,7 @@ def init_db():
         """, topics_data)
 
     cur.execute("SELECT COUNT(*) FROM practical_projects")
-    if cur.fetchone()[0] == 0:  # ✅ ДҰРЫС
+    if cur.fetchone()[0] == 0:
         projects_data = [
             (1, 1, "1-практикалық жоба. Жұмыс үстелін модельдеу", "Жұмыс үстелінің 3D моделін жасау.", "1. Blender ашыңыз|2. Объектілерді қосыңыз|3. Рендер жасаңыз", "Модель (2)|Материал (2)|Жарық (2)|Камера (2)|Көркемдік (2)", 1),
             (2, 2, "2-практикалық жоба. Модель құру", "Базалық объектілерді қолдану.", "1. Объект таңдаңыз|2. Modifier қолданыңыз|3. Edit Mode|4. Рендер", "Модель (2)|Modifier (2)|Тегістік (2)|Деталь (2)|Көркемдік (2)", 1),
@@ -248,7 +256,7 @@ def init_db():
         """, projects_data)
 
     cur.execute("SELECT COUNT(*) FROM tasks")
-    if cur.fetchone()[0] == 0:  # ✅ ДҰРЫС
+    if cur.fetchone()[0] == 0:
         tasks_data = [
             (1, "multiple_choice", "Blender негізгі панелі?", "3D Viewport|Outliner|Properties|Timeline", "3D Viewport", 10, 1),
             (1, "fill_blank", "Объектілерді қозғалту үшін ___ пернесі.", None, "G", 10, 2),
@@ -275,9 +283,9 @@ init_db()
 @app.route('/')
 def index():
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT COUNT(*) as cnt FROM teachers")
-    teachers_count = cur.fetchone()['cnt']  # ✅ ДҰРЫС - RealDictCursor қолданылған
+    teachers_count = cur.fetchone()['cnt']
     cur.execute("SELECT COUNT(*) as cnt FROM students")
     students_count = cur.fetchone()['cnt']
     cur.execute("SELECT * FROM topics ORDER BY order_num")
@@ -316,7 +324,7 @@ def login_teacher():
         password = request.form['password']
         hashed = hashlib.sha256(password.encode()).hexdigest()
         conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM teachers WHERE phone = %s AND password = %s", (phone, hashed))
         teacher = cur.fetchone()
         cur.close()
@@ -335,7 +343,7 @@ def teacher_dashboard():
     if 'teacher_id' not in session or session.get('user_type') != 'teacher':
         return redirect(url_for('login_teacher'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM classes WHERE teacher_id = %s", (session['teacher_id'],))
     classes = cur.fetchall()
     students_stats = []
@@ -405,7 +413,7 @@ def grade_submission(sub_id):
     score = data.get('score')
     comment = data.get('comment', '')
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM project_submissions WHERE id = %s", (sub_id,))
     sub = cur.fetchone()
     if not sub:
@@ -440,7 +448,7 @@ def register_student():
         class_password = request.form['class_password']
         password = request.form['password']
         conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM classes WHERE class_code = %s AND class_password = %s", (class_code, class_password))
         cls = cur.fetchone()
         if not cls:
@@ -474,7 +482,7 @@ def login_student():
         password = request.form['password']
         hashed = hashlib.sha256(password.encode()).hexdigest()
         conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
             SELECT s.*, c.class_name 
             FROM students s 
@@ -499,7 +507,7 @@ def student_dashboard():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM students WHERE id = %s", (session['student_id'],))
     student = cur.fetchone()
     cur.execute("""
@@ -541,7 +549,7 @@ def student_dashboard():
 @app.route('/topic/<int:topic_id>')
 def topic_detail(topic_id):
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM topics WHERE id = %s", (topic_id,))
     topic = cur.fetchone()
     cur.execute("SELECT * FROM tasks WHERE topic_id = %s ORDER BY order_num", (topic_id,))
@@ -563,10 +571,10 @@ def topic_detail(topic_id):
             sub = cur.fetchone()
             project_submissions[project['id']] = sub
         cur.execute("""
-            SELECT COUNT(*) FROM student_progress 
+            SELECT COUNT(*) as cnt FROM student_progress 
             WHERE student_id = %s AND task_id IN (SELECT id FROM tasks WHERE topic_id = %s) AND completed = 1
         """, (session['student_id'], topic_id))
-        completed_count = cur.fetchone()['count']
+        completed_count = cur.fetchone()['cnt']
         all_tasks_completed = completed_count >= len(tasks)
     cur.close()
     conn.close()
@@ -579,7 +587,7 @@ def project_detail(project_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM practical_projects WHERE id = %s", (project_id,))
     project = cur.fetchone()
     if not project:
@@ -606,7 +614,7 @@ def upload_project(project_id):
     if file.filename == '':
         return jsonify({'error': 'Файл таңдалмады'}), 400
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM practical_projects WHERE id = %s", (project_id,))
     project = cur.fetchone()
     if not project:
@@ -639,7 +647,7 @@ def upload_project_files(project_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return jsonify({'error': 'Кіру қажет'}), 401
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM practical_projects WHERE id = %s", (project_id,))
     project = cur.fetchone()
     if not project:
@@ -698,7 +706,7 @@ def delete_submission(sub_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return jsonify({'error': 'Кіру қажет'}), 401
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM project_submissions WHERE id = %s AND student_id = %s", (sub_id, session['student_id']))
     sub = cur.fetchone()
     if not sub:
@@ -718,7 +726,7 @@ def my_submissions(project_id):
     if 'student_id' not in session or session.get('user_type') != 'student':
         return jsonify({'error': 'Кіру қажет'}), 401
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
         SELECT id, filename, file_format, status, teacher_score, teacher_comment, graded_at, submitted_at 
         FROM project_submissions 
@@ -747,7 +755,7 @@ def submit_task():
     task_id = data.get('task_id')
     answer = data.get('answer')
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM tasks WHERE id = %s", (task_id,))
     task = cur.fetchone()
     if not task:
@@ -812,7 +820,7 @@ def my_grades():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM students WHERE id = %s", (session['student_id'],))
     student = cur.fetchone()
     cur.execute("""
@@ -857,7 +865,7 @@ def notifications():
     if 'student_id' not in session:
         return redirect(url_for('login_student'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM notifications WHERE student_id = %s ORDER BY created_at DESC", (session['student_id'],))
     notifs = cur.fetchall()
     cur.execute("UPDATE notifications SET is_read = 1 WHERE student_id = %s", (session['student_id'],))
@@ -871,7 +879,7 @@ def certificate():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM students WHERE id = %s", (session['student_id'],))
     student = cur.fetchone()
     cur.execute("""
@@ -911,7 +919,7 @@ def certificate():
 def api_stats():
     try:
         conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         today = datetime.now().strftime('%Y-%m-%d')
         last_week = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
         cur.execute("SELECT COUNT(*) as cnt FROM teachers")
@@ -979,7 +987,7 @@ def practice():
     if 'student_id' not in session or session.get('user_type') != 'student':
         return redirect(url_for('login_student'))
     conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  # ✅ ДҰРЫС
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
         SELECT t.*, tp.title as topic_title 
         FROM tasks t 
