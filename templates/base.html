@@ -468,6 +468,25 @@
             gap: 0.5rem;
         }
 
+.admin-link {
+    background: linear-gradient(135deg, #e94560, #ff6b6b);
+    color: white !important;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-left: 10px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.admin-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+}
+
+.admin-link i {
+    margin-right: 6px;
+}
+        
         .chat-input {
             flex: 1;
             padding: 0.8rem;
@@ -540,6 +559,46 @@
         {% block content %}{% endblock %}
     </div>
 
+   <!-- НАВИГАЦИЯ - басты беттің header бөліміне қосу -->
+<nav class="main-nav">
+    <div class="nav-logo">
+        <i class="fas fa-cube"></i>
+        <span>Blender 3D Academy</span>
+    </div>
+    
+    <div class="nav-links">
+        <a href="/" class="nav-link active">
+            <i class="fas fa-home"></i> Басты бет
+        </a>
+        <a href="/courses" class="nav-link">
+            <i class="fas fa-book"></i> Курстар
+        </a>
+        <a href="/about" class="nav-link">
+            <i class="fas fa-info-circle"></i> Біз туралы
+        </a>
+        
+        <!-- ӘКІМШІ сілтемесі - басты беттен админ панеліне өту -->
+        <a href="/admin" class="nav-link admin-link">
+            <i class="fas fa-shield-alt"></i> 
+            <span>Әкімші</span>
+        </a>
+    </div>
+    
+    <div class="nav-auth">
+        {% if current_user.is_authenticated %}
+            <a href="/profile" class="nav-link">
+                <i class="fas fa-user"></i> {{ current_user.name }}
+            </a>
+            <a href="/logout" class="btn btn-outline">
+                <i class="fas fa-sign-out-alt"></i> Шығу
+            </a>
+        {% else %}
+            <a href="/login" class="btn btn-outline">Кіру</a>
+            <a href="/register" class="btn btn-primary">Тіркелу</a>
+        {% endif %}
+    </div>
+</nav> 
+    
     <!-- AI Chat Widget -->
     <div class="chat-widget">
         <div class="chat-panel" id="chatPanel">
