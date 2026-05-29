@@ -137,34 +137,6 @@
             align-items: center;
         }
 
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 25px;
-            padding: 10px 40px 10px 20px;
-            color: var(--text-primary);
-            width: 280px;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .search-box input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 15px rgba(233, 69, 96, 0.2);
-        }
-
-        .search-box i {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
         .btn {
             padding: 10px 22px;
             border-radius: 8px;
@@ -176,6 +148,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            text-decoration: none;
         }
 
         .btn-primary {
@@ -197,6 +170,30 @@
         .btn-outline:hover {
             border-color: var(--accent);
             color: var(--accent);
+        }
+
+        .btn-danger {
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-danger:hover {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .admin-name {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+
+        .admin-name i {
+            color: var(--accent);
+            margin-right: 5px;
         }
 
         /* Stats Cards */
@@ -270,11 +267,6 @@
         .stat-change.up {
             background: rgba(74, 222, 128, 0.2);
             color: var(--success);
-        }
-
-        .stat-change.down {
-            background: rgba(233, 69, 96, 0.2);
-            color: var(--accent);
         }
 
         .stat-value {
@@ -411,11 +403,6 @@
             color: var(--success);
         }
 
-        .status.inactive {
-            background: rgba(148, 163, 184, 0.15);
-            color: var(--text-secondary);
-        }
-
         .status-dot {
             width: 8px;
             height: 8px;
@@ -423,33 +410,15 @@
             background: currentColor;
         }
 
-        .actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: none;
-            background: var(--bg-hover);
+        .password-field {
+            font-family: 'Courier New', monospace;
+            background: rgba(15, 52, 96, 0.5);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            border: 1px solid var(--border);
         }
-
-        .action-btn:hover {
-            background: var(--accent);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .action-btn.edit:hover { background: var(--info); }
-        .action-btn.delete:hover { background: var(--accent); }
 
         /* Pagination */
         .pagination {
@@ -521,65 +490,39 @@
         .section:nth-child(2) { animation-delay: 0.1s; }
         .section:nth-child(3) { animation-delay: 0.2s; }
     </style>
+<base target="_blank">
 </head>
 <body>
 
-    <!-- Sidebar -->
+    <!-- Sidebar - ТЕК БІР МӘЗІР -->
     <aside class="sidebar">
         <div class="logo">
             <i class="fas fa-cube"></i>
             <h2>Blender <span>3D</span> Academy</h2>
         </div>
-        
+
         <nav class="nav-menu">
-            <a href="#" class="nav-item active">
+            <a href="/admin" class="nav-item active">
                 <i class="fas fa-chart-line"></i>
                 <span>Басқару панелі</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-user-graduate"></i>
-                <span>Оқушылар</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span>Мұғалімдер</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-book"></i>
-                <span>Курстар</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-tasks"></i>
-                <span>Тапсырмалар</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-certificate"></i>
-                <span>Сертификаттар</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-cog"></i>
-                <span>Параметрлер</span>
             </a>
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Header -->
+        <!-- Header - ОҢ ЖАҚТА ШЫҒУ БАТЫРМАСЫ -->
         <div class="header">
             <h1><i class="fas fa-shield-alt"></i>Admin Panel</h1>
             <div class="header-actions">
-                <div class="search-box">
-                    <input type="text" placeholder="Іздеу...">
-                    <i class="fas fa-search"></i>
-                </div>
-                <button class="btn btn-outline">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    Жаңа қосу
-                </button>
+                <span class="admin-name">
+                    <i class="fas fa-user-shield"></i>
+                    {{ admin_name|default('Әкімші') }}
+                </span>
+                <a href="/admin/logout" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Шығу
+                </a>
             </div>
         </div>
 
@@ -634,10 +577,8 @@
                         <tr>
                             <th>ID</th>
                             <th>Аты-жөні</th>
-                            <th>Email</th>
+                            <th>Пароль</th>
                             <th>Күйі</th>
-                            <th>Тіркелген күні</th>
-                            <th>Әрекеттер</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -646,33 +587,21 @@
                             <td><strong>#{{ s.id }}</strong></td>
                             <td>
                                 <div class="user-info">
-                                    <div class="avatar">{{ s.name[0] }}</div>
+                                    <div class="avatar">{{ s.full_name[0] }}</div>
                                     <div class="user-details">
-                                        <h4>{{ s.name }}</h4>
+                                        <h4>{{ s.full_name }}</h4>
                                         <span>Оқушы</span>
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ s.email }}</td>
+                            <td>
+                                <span class="password-field">{{ s.password|default('—') }}</span>
+                            </td>
                             <td>
                                 <span class="status active">
                                     <span class="status-dot"></span>
                                     Белсенді
                                 </span>
-                            </td>
-                            <td>2024-01-15</td>
-                            <td>
-                                <div class="actions">
-                                    <button class="action-btn edit" title="Өңдеу">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn" title="Көру">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="action-btn delete" title="Жою">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -703,10 +632,8 @@
                         <tr>
                             <th>ID</th>
                             <th>Аты-жөні</th>
-                            <th>Email</th>
-                            <th>Күйі</th>
-                            <th>Курстары</th>
-                            <th>Әрекеттер</th>
+                            <th>Телефон</th>
+                            <th>Пароль</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -715,33 +642,16 @@
                             <td><strong>#{{ t.id }}</strong></td>
                             <td>
                                 <div class="user-info">
-                                    <div class="avatar teacher">{{ t.name[0] }}</div>
+                                    <div class="avatar teacher">{{ t.full_name[0] }}</div>
                                     <div class="user-details">
-                                        <h4>{{ t.name }}</h4>
+                                        <h4>{{ t.full_name }}</h4>
                                         <span>Мұғалім</span>
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ t.email }}</td>
+                            <td>{{ t.phone|default('—') }}</td>
                             <td>
-                                <span class="status active">
-                                    <span class="status-dot"></span>
-                                    Белсенді
-                                </span>
-                            </td>
-                            <td>3 курс</td>
-                            <td>
-                                <div class="actions">
-                                    <button class="action-btn edit" title="Өңдеу">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn" title="Көру">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="action-btn delete" title="Жою">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
+                                <span class="password-field">{{ t.password|default('—') }}</span>
                             </td>
                         </tr>
                         {% endfor %}
