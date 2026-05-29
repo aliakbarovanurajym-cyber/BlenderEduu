@@ -4,10 +4,17 @@ import psycopg2.extras
 import hashlib
 from datetime import datetime, timedelta
 import os
+from functools import wraps
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'blender3d_secret_key_2026'
+
+# === ТЕК ОСЫ ЕКІ АДМИНГЕ РҰҚСАТ ===
+ALLOWED_ADMINS = {
+    'Тілектесқызы Жауқазын': '0000',
+    'Алиакбарова Нұрайым': '0000'
+}
 
 # PostgreSQL конфигурациясы
 def get_db():
@@ -42,6 +49,24 @@ def inject_nav_data():
     else:
         data['unread_count'] = 0
     return data
+
+# === АДМИН ДЕКОРАТОРЫ ===
+def admin_required(f):
+    """Тек тіркелген админдерге рұқсат беретін декоратор"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_name' not in session:
+            flash('Админ панеліне кіру үшін авторизациядан өтіңіз', 'error')
+            return redirect(url_for('admin_login'))
+        
+        # Қосымша тексеру: сессиядағы аты рұқсат тізімінде бар ма
+        if session['admin_name'] not in ALLOWED_ADMINS:
+            session.pop('admin_name', None)
+            flash('Рұқсат жоқ', 'error')
+            return redirect(url_for('admin_login'))
+            
+        return f(*args, **kwargs)
+    return decorated_function
 
 def init_db():
     conn = get_db()
@@ -1061,8 +1086,39 @@ def db_view():
     conn.close()
     return str(data)
 
+# === АДМИН ЖОЛДАРЫ ===
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Админ кіру беті"""
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        # Тек екі адамды тексеру
+        if name in ALLOWED_ADMINS and ALLOWED_ADMINS[name] == password:
+            session['admin_name'] = name
+            session['is_admin'] = True
+            flash(f'Қош келдіңіз, {name}!', 'success')
+            return redirect(url_for('admin_panel'))
+        else:
+            flash('Аты-жөні немесе пароль дұрыс емес!', 'error')
+            return redirect(url_for('admin_login'))
+    
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Админ шығу"""
+    session.pop('admin_name', None)
+    session.pop('is_admin', None)
+    flash('Сіз шықтыңыз', 'info')
+    return redirect(url_for('index'))
+
 @app.route("/admin")
+@admin_required
 def admin_panel():
+    """Негізгі админ панелі"""
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM students")
