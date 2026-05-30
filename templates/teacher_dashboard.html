@@ -455,23 +455,30 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
         .then(result => {
             if (result.success) {
                 alert('Сынып сәтті құрылды!\n\nАтауы: ' + classNameValue + '\nКод: ' + generatedClassCode);
                 window.location.reload();
-            } else if (result.error && (result.error.includes('бұрын қолданылған') || result.error.includes('already exists') || result.error.includes('unique'))) {
-                // Код қайталанған болса, жаңа код генерациялау
-                alert('Бұл код бұрын қолданылған. Жаңа код генерацияланды!');
-                generatedClassCode = makeRandomClassCode();
-                document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
             } else {
                 alert(result.error || 'Қате орын алды');
             }
         })
         .catch((err) => {
             console.error('Қате:', err);
-            alert('Қате орын алды. Серверге қосылу мүмкін емес.');
+            // Егер код бұрын қолданылған болса, жаңа код генерациялау
+            if (err.error && (err.error.includes('бұрын қолданылған') || err.error.includes('already exists') || err.error.includes('unique') || err.error.includes('Integrity'))) {
+                alert('Бұл код бұрын қолданылған (' + generatedClassCode + '). Жаңа код генерацияланды!');
+                generatedClassCode = makeRandomClassCode();
+                document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
+            } else {
+                alert(err.error || 'Қате орын алды. Серверге қосылу мүмкін емес.');
+            }
         });
     }
 
