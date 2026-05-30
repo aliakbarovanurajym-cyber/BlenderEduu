@@ -55,17 +55,14 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         admin_name = session.get('admin_name')
         is_admin = session.get('is_admin')
-
         if not admin_name or not is_admin:
             flash('Админ панеліне кіру үшін авторизациядан өтіңіз', 'error')
             return redirect(url_for('admin_login'))
-
         if admin_name not in ALLOWED_ADMINS:
             session.pop('admin_name', None)
             session.pop('is_admin', None)
             flash('Рұқсат жоқ', 'error')
             return redirect(url_for('admin_login'))
-
         return f(*args, **kwargs)
     return decorated_function
 
@@ -229,74 +226,6 @@ def init_db():
         )
     """)
 
-    cur.execute("SELECT COUNT(*) FROM topics")
-    if cur.fetchone()[0] == 0:
-        topics_data = [
-            ("§1. Интерфейс және негізгі құралдар", "Blender бағдарламасының интерфейсімен танысу", "https://youtu.be/GVy2Gpi81rU",
-             "Blender — ашық бастапқы коды бар 3D компьютерлік графика бағдарламасы. Ол 3D модельдеу, анимация, рендеринг, видео монтаж және т.б. мүмкіндіктерді қамтиды.",
-             "1-практикалық жоба. Жұмыс үстелін модельдеу", 1),
-            ("§2. Модель құру: бөлшектерді біріктіру және тегістеу", "Модель құрудың негізгі тәсілдері", "https://youtu.be/zgoEzNNP_Iw",
-             "3D модельдеуде объектілерді құрудың бірнеше тәсілі бар: экструдия (E), инсерт (I), булеан операциялары.",
-             "2,3,4-практикалық жобалар", 2),
-            ("§3. Материалдар және текстуралар", "Материалдар мен текстураларды таңдау", "https://youtu.be/vUHGGM-TdPI",
-             "Материалдар объектінің сыртқы түрін анықтайды. Blender-де Principled BSDF шейдері қолданылады.",
-             "5-практикалық жоба. Материал мен текстура таңдау", 3),
-            ("§4. Жарық және камера", "Жарық пен камераны орнату", "https://youtu.be/6BDdcsqGoJw",
-             "3D сценада жарық көздері маңызды рөл атқарады.",
-             "6-практикалық жоба. Жарық пен камераны орнату", 4),
-            ("§5. Рендеринг: фотореалистік визуализациялау", "Рендеринг процесі", "https://youtu.be/Q6jHF9vRfnQ",
-             "Рендеринг — 3D сценаны 2D суретке айналдыру процесі.",
-             "7-практикалық жоба. Рендеринг", 5),
-            ("§6. Анимациямен жұмыс", "Анимация жасау негіздері", "https://youtu.be/0K4h5ECs8xQ",
-             "Анимация — объектілердің уақыт бойынша өзгерісі.",
-             "8-практикалық жоба. Анимация жасау", 6),
-            ("§7. Менің 3D жобам", "Өз 3D жобасын жасау", "https://youtu.be/lAjVHGWK3ss",
-             "Жобалық жұмыс — бұл оқушының өзі жасаған 3D моделі.",
-             "9,10-практикалық жобалар", 7),
-        ]
-        cur.executemany("""
-            INSERT INTO topics (title, description, video_url, theory, practical_guide, order_num) 
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, topics_data)
-
-    cur.execute("SELECT COUNT(*) FROM practical_projects")
-    if cur.fetchone()[0] == 0:
-        projects_data = [
-            (1, 1, "1-практикалық жоба. Жұмыс үстелін модельдеу", "Жұмыс үстелінің 3D моделін жасау.", "1. Blender ашыңыз|2. Объектілерді қосыңыз|3. Рендер жасаңыз", "Модель (2)|Материал (2)|Жарық (2)|Камера (2)|Көркемдік (2)", 1),
-            (2, 2, "2-практикалық жоба. Модель құру", "Базалық объектілерді қолдану.", "1. Объект таңдаңыз|2. Modifier қолданыңыз|3. Edit Mode|4. Рендер", "Модель (2)|Modifier (2)|Тегістік (2)|Деталь (2)|Көркемдік (2)", 1),
-            (2, 3, "3-практикалық жоба. Бөлшектерді біріктіру", "Boolean операциялары.", "1. Екі объекті|2. Boolean|3. Union/Difference|4. Рендер", "Біріктіру (2)|Пішін (2)|Материал (2)|Жарық (2)|Рендер (2)", 2),
-            (2, 4, "4-практикалық жоба. Объект бетін тегістеу", "Subdivision Surface.", "1. Объект таңдаңыз|2. Subdivision|3. Smooth Shading|4. Рендер", "Тегістік (2)|Subdivision (2)|Пішін (2)|Материал (2)|Рендер (2)", 3),
-            (3, 5, "5-практикалық жоба. Материал мен текстура", "Principled BSDF.", "1. Shader Editor|2. BSDF|3. UV Mapping|4. Рендер", "Материал (2)|Текстура (2)|UV (2)|Жарық (2)|Рендер (2)", 1),
-            (4, 6, "6-практикалық жоба. Жарық пен камера", "Three-point lighting.", "1. Жарық қосыңыз|2. Key/Fill/Back|3. Камера|4. Рендер", "Жарық (2)|Камера (2)|DOF (2)|Түс (2)|Рендер (2)", 1),
-            (5, 7, "7-практикалық жоба. Рендеринг", "Cycles/Eevee.", "1. Қозғалтқыш|2. Сэмпл|3. Өлшем|4. Рендер", "Сапа (2)|Сэмпл (2)|Денойзинг (2)|Өлшем (2)|Уақыт (2)", 1),
-            (6, 8, "8-практикалық жоба. Анимация", "Keyframe.", "1. Timeline|2. Keyframe|3. Graph Editor|4. Render Animation", "Плавность (2)|Keyframe (2)|Graph (2)|Рендер (2)|Уақыт (2)", 1),
-            (7, 9, "9-практикалық жоба. 3D жоба", "Өз жобаңыз.", "1. Тақырып|2. Жоспар|3. Модель|4. Материал|5. Рендер", "Тақырып (2)|Модель (2)|Материал (2)|Жарық (2)|Рендер (2)", 1),
-            (7, 10, "10-практикалық жоба. Презентация", "Жобаны қорғау.", "1. 5 сурет|2. Презентация|3. Сипаттама|4. Қорғау", "Құрылым (2)|Сурет (2)|Сипаттама (2)|Техника (2)|Қорғау (2)", 2),
-        ]
-        cur.executemany("""
-            INSERT INTO practical_projects (topic_id, project_num, title, description, steps, criteria, order_num) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, projects_data)
-
-    cur.execute("SELECT COUNT(*) FROM tasks")
-    if cur.fetchone()[0] == 0:
-        tasks_data = [
-            (1, "multiple_choice", "Blender негізгі панелі?", "3D Viewport|Outliner|Properties|Timeline", "3D Viewport", 10, 1),
-            (1, "fill_blank", "Объектілерді қозғалту үшін ___ пернесі.", None, "G", 10, 2),
-            (1, "matching", "Сәйкестендіріңіз", "G:қозғалту|S:масштабтау|R:айналдыру", "G:қозғалту|S:масштабтау|R:айналдыру", 15, 3),
-            (2, "multiple_choice", "Boolean не істейді?", "Біріктіру|Тегістеу|Айналдыру|Көшіру", "Біріктіру", 10, 1),
-            (2, "fill_blank", "Экструдия ___ перне.", None, "E", 10, 2),
-            (3, "multiple_choice", "BSDF негізгі параметрі?", "Base Color|Alpha|Normal|Displacement", "Base Color", 10, 1),
-            (4, "multiple_choice", "Барлық бағытта жарық?", "Point|Sun|Spot|Area", "Point", 10, 1),
-            (5, "multiple_choice", "Фотореалистік рендер?", "Eevee|Cycles|Workbench", "Cycles", 10, 1),
-            (6, "multiple_choice", "Анимация негізі?", "Keyframe|Modifier|Shader", "Keyframe", 10, 1),
-            (7, "multiple_choice", "Презентация неше сурет?", "1|3|5|10", "5", 10, 1),
-        ]
-        cur.executemany("""
-            INSERT INTO tasks (topic_id, task_type, question, options, correct_answer, points, order_num) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, tasks_data)
-
     conn.commit()
     cur.close()
     conn.close()
@@ -318,7 +247,136 @@ def index():
     return render_template('index.html', teachers_count=teachers_count, students_count=students_count, 
                           total_count=teachers_count + students_count, topics=topics)
 
-# === МҰҒАЛІМ ТІРКЕУІ ===
+# ============================================
+# === ОҚУШЫ ТІРКЕЛУІ (REGISTER) ===
+# ============================================
+@app.route('/register_student', methods=['GET', 'POST'])
+def register_student():
+    if request.method == 'POST':
+        # 1. Деректерді алу
+        full_name = request.form.get('full_name', '').strip()
+        class_code = request.form.get('class_code', '').strip().upper()
+        password = request.form.get('password', '')
+
+        # 2. Бос өрістерді тексеру
+        if not full_name or not class_code or not password:
+            flash('Барлық өрістерді толтырыңыз!', 'error')
+            return render_template('register_student.html')
+
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 3. Сынып кодын тексеру (classes кестесінен)
+        cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
+        cls = cur.fetchone()
+
+        if not cls:
+            flash('Сынып коды қате! Мұғалімнен дұрыс кодты сұраңыз.', 'error')
+            cur.close()
+            conn.close()
+            return render_template('register_student.html')
+
+        # 4. Бұл аты-жөн бұрын тіркелген бе?
+        cur.execute("""
+            SELECT * FROM students 
+            WHERE full_name = %s AND class_id = %s
+        """, (full_name, cls['id']))
+        existing = cur.fetchone()
+
+        if existing:
+            flash('Бұл аты-жөнмен оқушы бұрын тіркелген! Егер бұл сіз болсаңыз, кіру бетіне өтіңіз.', 'error')
+            cur.close()
+            conn.close()
+            return render_template('register_student.html')
+
+        try:
+            # 5. Оқушыны базаға қосу
+            cur.execute("""
+                INSERT INTO students (full_name, class_id, password) 
+                VALUES (%s, %s, %s) RETURNING id
+            """, (full_name, cls['id'], password))
+            student_id = cur.fetchone()['id']
+            conn.commit()
+
+            # 6. Автоматты кіру (сессия орнату)
+            session['student_id'] = student_id
+            session['student_name'] = full_name
+            session['class_id'] = cls['id']
+            session['user_type'] = 'student'
+
+            flash('Сіз сәтті тіркелдіңіз! Қош келдіңіз!', 'success')
+            return redirect(url_for('student_dashboard'))
+
+        except Exception as e:
+            conn.rollback()
+            flash(f'Тіркеу қатесі: {str(e)}', 'error')
+            return render_template('register_student.html')
+        finally:
+            cur.close()
+            conn.close()
+
+    return render_template('register_student.html')
+
+# ============================================
+# === ОҚУШЫ КІРУІ (LOGIN) ===
+# ============================================
+@app.route('/login_student', methods=['GET', 'POST'])
+def login_student():
+    if request.method == 'POST':
+        # 1. Деректерді алу
+        full_name = request.form.get('full_name', '').strip()
+        class_code = request.form.get('class_code', '').strip().upper()
+        password = request.form.get('password', '')
+
+        # 2. Бос өрістерді тексеру
+        if not full_name or not class_code or not password:
+            flash('Барлық өрістерді толтырыңыз!', 'error')
+            return render_template('login_student.html')
+
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 3. Сынып коды бойынша classes кестесінен class табу
+        cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
+        cls = cur.fetchone()
+
+        if not cls:
+            flash('Сынып коды қате! Мұғалімнен дұрыс кодты сұраңыз.', 'error')
+            cur.close()
+            conn.close()
+            return render_template('login_student.html')
+
+        # 4. Оқушыны тексеру: full_name + class_id + password
+        cur.execute("""
+            SELECT s.*, c.class_name, c.class_code 
+            FROM students s 
+            JOIN classes c ON s.class_id = c.id 
+            WHERE s.full_name = %s AND s.class_id = %s AND s.password = %s
+        """, (full_name, cls['id'], password))
+        student = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        if student:
+            # 5. Кіру сәтті - сессия орнату
+            session['student_id'] = student['id']
+            session['student_name'] = student['full_name']
+            session['class_id'] = student['class_id']
+            session['user_type'] = 'student'
+
+            flash(f'Қош келдіңіз, {student["full_name"]}!', 'success')
+            return redirect(url_for('student_dashboard'))
+        else:
+            # 6. Кіру сәтсіз - қате хабарлама
+            flash('Аты-жөн, сынып коды немесе пароль қате!', 'error')
+            return render_template('login_student.html')
+
+    return render_template('login_student.html')
+
+# ============================================
+# === МҰҒАЛІМ ЖОЛДАРЫ ===
+# ============================================
 @app.route('/register_teacher', methods=['GET', 'POST'])
 def register_teacher():
     if request.method == 'POST':
@@ -341,7 +399,6 @@ def register_teacher():
             conn.close()
     return render_template('register_teacher.html')
 
-# === МҰҒАЛІМ КІРУІ ===
 @app.route('/login_teacher', methods=['GET', 'POST'])
 def login_teacher():
     if request.method == 'POST':
@@ -416,16 +473,12 @@ def create_class():
     class_name = data.get('class_name', '').strip()
     class_code = data.get('class_code', '').strip().upper()
     class_password = data.get('class_password', '').strip()
-
     if not class_name:
         return jsonify({'error': 'Сынып атауын енгізіңіз!'}), 400
     if not class_code:
         return jsonify({'error': 'Сынып кодын енгізіңіз!'}), 400
-
-    # class_password NULL болса, бос жол қоямыз
     if not class_password:
         class_password = ''
-
     conn = get_db()
     cur = conn.cursor()
     try:
@@ -477,109 +530,9 @@ def grade_submission(sub_id):
     conn.close()
     return jsonify({'success': True})
 
-# === ОҚУШЫ ТІРКЕУІ (ТҮЗЕТІЛГЕН) ===
-@app.route('/register_student', methods=['GET', 'POST'])
-def register_student():
-    if request.method == 'POST':
-        full_name = request.form['full_name'].strip()
-        class_code = request.form['class_code'].strip().upper()
-        password = request.form['password']
-
-        if not full_name or not class_code or not password:
-            flash('Барлық өрістерді толтырыңыз!', 'error')
-            return render_template('register_student.html')
-
-        conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        # Сынып кодын тексеру
-        cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
-        cls = cur.fetchone()
-
-        if not cls:
-            flash('Сынып коды қате! Мұғалімнен дұрыс кодты сұраңыз.', 'error')
-            cur.close()
-            conn.close()
-            return render_template('register_student.html')
-
-        try:
-            # Оқушыны тіркеу (class_password емес, тек password)
-            cur.execute("""
-                INSERT INTO students (full_name, class_id, password) 
-                VALUES (%s, %s, %s) RETURNING id
-            """, (full_name, cls['id'], password))
-            student_id = cur.fetchone()['id']
-            conn.commit()
-
-            # Тіркелген соң автоматты түрде кіру
-            session['student_id'] = student_id
-            session['student_name'] = full_name
-            session['class_id'] = cls['id']
-            session['user_type'] = 'student'
-
-            flash('Оқушы сәтті тіркелді!', 'success')
-            return redirect(url_for('student_dashboard'))
-
-        except psycopg2.IntegrityError as e:
-            conn.rollback()
-            flash('Тіркеу қатесі! Мүмкін бұл аты-жөн бұрын тіркелген.', 'error')
-        except Exception as e:
-            conn.rollback()
-            flash(f'Тіркеу қатесі: {str(e)}', 'error')
-        finally:
-            cur.close()
-            conn.close()
-
-    return render_template('register_student.html')
-
-# === ОҚУШЫ КІРУІ (ТҮЗЕТІЛГЕН) ===
-@app.route('/login_student', methods=['GET', 'POST'])
-def login_student():
-    if request.method == 'POST':
-        full_name = request.form['full_name'].strip()
-        class_code = request.form['class_code'].strip().upper()
-        password = request.form['password']
-
-        if not full_name or not class_code or not password:
-            flash('Барлық өрістерді толтырыңыз!', 'error')
-            return render_template('login_student.html')
-
-        conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        # Сынып коды бойынша сыныпты табу
-        cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
-        cls = cur.fetchone()
-
-        if not cls:
-            flash('Сынып коды қате!', 'error')
-            cur.close()
-            conn.close()
-            return render_template('login_student.html')
-
-        # Оқушыны тексеру - дәл сәйкестік (full_name, class_id, password)
-        cur.execute("""
-            SELECT s.*, c.class_name, c.class_code 
-            FROM students s 
-            JOIN classes c ON s.class_id = c.id 
-            WHERE s.full_name = %s AND s.class_id = %s AND s.password = %s
-        """, (full_name, cls['id'], password))
-        student = cur.fetchone()
-
-        cur.close()
-        conn.close()
-
-        if student:
-            session['student_id'] = student['id']
-            session['student_name'] = student['full_name']
-            session['class_id'] = student['class_id']
-            session['user_type'] = 'student'
-            return redirect(url_for('student_dashboard'))
-        else:
-            flash('Аты-жөн, сынып коды немесе пароль қате!', 'error')
-
-    return render_template('login_student.html')
-
+# ============================================
+# === ОҚУШЫ ПАНЕЛІ ЖӘНЕ БАСҚА ЖОЛДАР ===
+# ============================================
 @app.route('/student_dashboard')
 def student_dashboard():
     if 'student_id' not in session or session.get('user_type') != 'student':
@@ -1146,7 +1099,6 @@ def admin_login():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         password = request.form.get('password', '').strip()
-
         if name in ALLOWED_ADMINS and ALLOWED_ADMINS[name] == password:
             session['admin_name'] = name
             session['is_admin'] = True
@@ -1155,7 +1107,6 @@ def admin_login():
         else:
             flash('Аты-жөні немесе пароль дұрыс емес!', 'error')
             return redirect(url_for('admin_login'))
-
     return render_template('admin_login.html')
 
 @app.route('/admin/logout')
