@@ -1086,7 +1086,7 @@ def db_view():
     conn.close()
     return str(data)
 
-# === АДМИН ЖОЛДАРЫ (ТҮЗЕТІЛГЕН — FLASH ХАБАРЛАМАСЫЗ) ===
+# === АДМИН ЖОЛДАРЫ (ТҮЗЕТІЛГЕН) ===
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -1111,8 +1111,8 @@ def admin_login():
 def admin_logout():
     session.pop('admin_name', None)
     session.pop('is_admin', None)
-    # ❌ "Сіз шықтыныз" FLASH ХАБАРЛАМАСЫ ЖОҚ
-    return redirect(url_for('index'))
+    # ✅ ТІКЕЛЕЙ НЕГІЗГІ LOGOUT-ҚА REDIRECT — бөлек вкладка ашылмайды
+    return redirect(url_for('logout'))
 
 @app.route("/admin")
 @admin_required
