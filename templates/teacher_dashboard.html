@@ -442,7 +442,7 @@
         }
     }
 
-    // === СЫНЫПТЫ РАСТАУ ЖӘНЕ САҚТАУ ===
+    // === СЫНЫПТЫ РАСТАУ ЖӘНЕ САҚТАУ (қайталанған кодты тексеру) ===
     function confirmCreateClass() {
         const data = {
             class_name: classNameValue,
@@ -460,6 +460,11 @@
             if (result.success) {
                 alert('Сынып сәтті құрылды!\n\nАтауы: ' + classNameValue + '\nКод: ' + generatedClassCode);
                 window.location.reload();
+            } else if (result.error && (result.error.includes('бұрын қолданылған') || result.error.includes('already exists') || result.error.includes('unique'))) {
+                // Код қайталанған болса, жаңа код генерациялау
+                alert('Бұл код бұрын қолданылған. Жаңа код генерацияланды!');
+                generatedClassCode = makeRandomClassCode();
+                document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
             } else {
                 alert(result.error || 'Қате орын алды');
             }
