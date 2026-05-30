@@ -89,7 +89,7 @@ def init_db():
             teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
             class_name VARCHAR(255) NOT NULL,
             class_code VARCHAR(50) UNIQUE NOT NULL,
-            class_password VARCHAR(255) NOT NULL,
+            class_password VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -99,7 +99,7 @@ def init_db():
             id SERIAL PRIMARY KEY,
             full_name VARCHAR(255) NOT NULL,
             class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-            class_password VARCHAR(255) NOT NULL,
+            class_password VARCHAR(255),
             password VARCHAR(255) NOT NULL,
             xp INTEGER DEFAULT 0,
             level INTEGER DEFAULT 1,
@@ -471,22 +471,21 @@ def register_student():
     if request.method == 'POST':
         full_name = request.form['full_name']
         class_code = request.form['class_code']
-        class_password = request.form['class_password']
         password = request.form['password']
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM classes WHERE class_code = %s AND class_password = %s", (class_code, class_password))
+        cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
         cls = cur.fetchone()
         if not cls:
-            flash('Сынып коды немесе пароль қате!', 'error')
+            flash('Сынып коды қате!', 'error')
             cur.close()
             conn.close()
             return render_template('register_student.html')
         try:
             cur.execute("""
-                INSERT INTO students (full_name, class_id, class_password, password) 
-                VALUES (%s, %s, %s, %s)
-            """, (full_name, cls['id'], class_password, password))
+                INSERT INTO students (full_name, class_id, password) 
+                VALUES (%s, %s, %s)
+            """, (full_name, cls['id'], password))
             conn.commit()
             flash('Оқушы сәтті тіркелді!', 'success')
             return redirect(url_for('login_student'))
@@ -504,7 +503,6 @@ def login_student():
     if request.method == 'POST':
         full_name = request.form['full_name']
         class_code = request.form['class_code']
-        class_password = request.form['class_password']
         password = request.form['password']
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -512,8 +510,8 @@ def login_student():
             SELECT s.*, c.class_name 
             FROM students s 
             JOIN classes c ON s.class_id = c.id 
-            WHERE s.full_name = %s AND c.class_code = %s AND s.class_password = %s AND s.password = %s
-        """, (full_name, class_code, class_password, password))
+            WHERE s.full_name = %s AND c.class_code = %s AND s.password = %s
+        """, (full_name, class_code, password))
         student = cur.fetchone()
         cur.close()
         conn.close()
@@ -1086,7 +1084,7 @@ def db_view():
     conn.close()
     return str(data)
 
-# === АДМИН ЖОЛДАРЫ (ТҮЗЕТІЛГЕН) ===
+# === АДМИН ЖОЛДАРЫ ===
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -1098,10 +1096,8 @@ def admin_login():
             session['admin_name'] = name
             session['is_admin'] = True
             session.permanent = True
-            # ❌ FLASH ХАБАРЛАМАСЫ ЖОҚ — тікелей redirect
             return redirect(url_for('admin_panel'))
         else:
-            # ✅ ТЕК ҚАТЕ FLASH
             flash('Аты-жөні немесе пароль дұрыс емес!', 'error')
             return redirect(url_for('admin_login'))
 
@@ -1111,7 +1107,6 @@ def admin_login():
 def admin_logout():
     session.pop('admin_name', None)
     session.pop('is_admin', None)
-    # ✅ ТІКЕЛЕЙ НЕГІЗГІ LOGOUT-ҚА REDIRECT — бөлек вкладка ашылмайды
     return redirect(url_for('logout'))
 
 @app.route("/admin")
