@@ -71,7 +71,7 @@
     .badge-success { background: #d1fae5; color: #065f46; }
     .badge-warning { background: #fff3cd; color: #856404; }
 
-    /* ЖАҢА: Генерацияланған кодты көрсету */
+    /* Генерацияланған кодты көрсету */
     .generated-code-box {
         background: linear-gradient(135deg, #6366f1, #8b5cf6);
         color: white;
@@ -156,7 +156,6 @@
             <div class="class-card">
                 <div class="class-name">{{ stat.class.class_name }}</div>
                 <div class="class-code">Код: {{ stat.class.class_code }}</div>
-                <div style="color: #64748b; font-size: 0.9rem;">Пароль: {{ stat.class.class_password }}</div>
 
                 <div class="class-stats">
                     <div class="class-stat">
@@ -280,8 +279,8 @@
 <div class="modal" id="createClassModal">
     <div class="modal-content">
         <h2 class="modal-header">📚 Жаңа сынып құру</h2>
-        
-        <!-- ҚАДАМ 1: Атау мен пароль -->
+
+        <!-- ҚАДАМ 1: Тек сынып атауы -->
         <div id="step1">
             <div class="form-group">
                 <label class="form-label">Сынып атауы *</label>
@@ -306,13 +305,12 @@
                     <i class="fas fa-copy"></i> Кодты көшіру
                 </button>
             </div>
-            
+
             <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 1rem; margin: 1rem 0;">
                 <p style="margin: 0; color: #0369a1; font-size: 0.9rem;">
                     <i class="fas fa-info-circle"></i> 
                     <strong>{{ session.teacher_name }}</strong> мұғалімі<br>
-                    <strong id="confirmClassName">6 "А" сынып</strong><br>
-                    Пароль: <strong id="confirmPassword">*****</strong>
+                    <strong id="confirmClassName">6 "А" сынып</strong>
                 </p>
             </div>
 
@@ -354,7 +352,6 @@
     let currentSubmissionId = null;
     let generatedClassCode = '';
     let classNameValue = '';
-    let classPasswordValue = '';
 
     function generateClassCode() {
         const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -372,7 +369,6 @@
         document.getElementById('step1').style.display = 'block';
         document.getElementById('step2').style.display = 'none';
         document.getElementById('classNameInput').value = '';
-        document.getElementById('classPasswordInput').value = '';
         generatedClassCode = '';
     }
 
@@ -382,30 +378,24 @@
 
     function generateCode() {
         classNameValue = document.getElementById('classNameInput').value.trim();
-        classPasswordValue = document.getElementById('classPasswordInput').value.trim();
 
         if (!classNameValue) {
             alert('Сынып атауын енгізіңіз!');
             return;
         }
-        if (!classPasswordValue) {
-            alert('Сынып паролін енгізіңіз!');
-            return;
-        }
 
         generatedClassCode = generateClassCode();
-        
+
         // Қадам 2-ге өту
         document.getElementById('step1').style.display = 'none';
         document.getElementById('step2').style.display = 'block';
-        
+
         // Кодты көрсету
         document.getElementById('generatedCode').textContent = generatedClassCode;
         document.getElementById('codeBox').classList.add('active');
-        
-        // Растау ақпаратын жаңарту
+
+        // Растау ақпаратын жаңарту (тек атау)
         document.getElementById('confirmClassName').textContent = classNameValue;
-        document.getElementById('confirmPassword').textContent = classPasswordValue;
     }
 
     function backToStep1() {
@@ -431,7 +421,7 @@
             textarea.select();
             document.execCommand('copy');
             document.body.removeChild(textarea);
-            
+
             const btn = document.getElementById('copyBtn');
             btn.innerHTML = '<i class="fas fa-check"></i> Көшірілді!';
             btn.classList.add('copied');
@@ -445,8 +435,7 @@
     function confirmCreate() {
         const data = {
             class_name: classNameValue,
-            class_code: generatedClassCode,
-            class_password: classPasswordValue
+            class_code: generatedClassCode
         };
 
         fetch('/create_class', {
