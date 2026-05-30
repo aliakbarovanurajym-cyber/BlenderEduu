@@ -99,7 +99,6 @@ def init_db():
             id SERIAL PRIMARY KEY,
             full_name VARCHAR(255) NOT NULL,
             class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-            class_password VARCHAR(255),
             password VARCHAR(255) NOT NULL,
             xp INTEGER DEFAULT 0,
             level INTEGER DEFAULT 1,
@@ -319,12 +318,12 @@ def index():
     return render_template('index.html', teachers_count=teachers_count, students_count=students_count, 
                           total_count=teachers_count + students_count, topics=topics)
 
-# === МҰҒАЛІМ ТІРКЕУІ (ХЭШТЕУСІЗ) ===
+# === МҰҒАЛІМ ТІРКЕУІ ===
 @app.route('/register_teacher', methods=['GET', 'POST'])
 def register_teacher():
     if request.method == 'POST':
-        full_name = request.form['full_name']
-        phone = request.form['phone']
+        full_name = request.form['full_name'].strip()
+        phone = request.form['phone'].strip()
         password = request.form['password']
         conn = get_db()
         cur = conn.cursor()
@@ -342,11 +341,11 @@ def register_teacher():
             conn.close()
     return render_template('register_teacher.html')
 
-# === МҰҒАЛІМ КІРУІ (ХЭШТЕУСІЗ) ===
+# === МҰҒАЛІМ КІРУІ ===
 @app.route('/login_teacher', methods=['GET', 'POST'])
 def login_teacher():
     if request.method == 'POST':
-        phone = request.form['phone']
+        phone = request.form['phone'].strip()
         password = request.form['password']
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -414,9 +413,14 @@ def create_class():
     if 'teacher_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
-    class_name = data.get('class_name')
-    class_code = data.get('class_code')
-    class_password = data.get('class_password')
+    class_name = data.get('class_name', '').strip()
+    class_code = data.get('class_code', '').strip().upper()
+    class_password = data.get('class_password', '').strip()
+
+    if not class_name:
+        return jsonify({'error': 'Сынып атауын енгізіңіз!'}), 400
+    if not class_code:
+        return jsonify({'error': 'Сынып кодын енгізіңіз!'}), 400
 
     # class_password NULL болса, бос жол қоямыз
     if not class_password:
@@ -430,7 +434,7 @@ def create_class():
             VALUES (%s, %s, %s, %s)
         """, (session['teacher_id'], class_name, class_code, class_password))
         conn.commit()
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'class_code': class_code})
     except psycopg2.IntegrityError:
         conn.rollback()
         return jsonify({'error': 'Бұл сынып коды бұрын қолданылған!'}), 400
@@ -473,23 +477,33 @@ def grade_submission(sub_id):
     conn.close()
     return jsonify({'success': True})
 
-# === ОҚУШЫ ТІРКЕУІ (ХЭШТЕУСІЗ) ===
+# === ОҚУШЫ ТІРКЕУІ (ТҮЗЕТІЛГЕН) ===
 @app.route('/register_student', methods=['GET', 'POST'])
 def register_student():
     if request.method == 'POST':
-        full_name = request.form['full_name']
-        class_code = request.form['class_code']
+        full_name = request.form['full_name'].strip()
+        class_code = request.form['class_code'].strip().upper()
         password = request.form['password']
+
+        if not full_name or not class_code or not password:
+            flash('Барлық өрістерді толтырыңыз!', 'error')
+            return render_template('register_student.html')
+
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Сынып кодын тексеру
         cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
         cls = cur.fetchone()
+
         if not cls:
-            flash('Сынып коды қате!', 'error')
+            flash('Сынып коды қате! Мұғалімнен дұрыс кодты сұраңыз.', 'error')
             cur.close()
             conn.close()
             return render_template('register_student.html')
+
         try:
+            # Оқушыны тіркеу (class_password емес, тек password)
             cur.execute("""
                 INSERT INTO students (full_name, class_id, password) 
                 VALUES (%s, %s, %s) RETURNING id
@@ -505,32 +519,56 @@ def register_student():
 
             flash('Оқушы сәтті тіркелді!', 'success')
             return redirect(url_for('student_dashboard'))
+
+        except psycopg2.IntegrityError as e:
+            conn.rollback()
+            flash('Тіркеу қатесі! Мүмкін бұл аты-жөн бұрын тіркелген.', 'error')
         except Exception as e:
             conn.rollback()
-            flash('Тіркеу қатесі!', 'error')
+            flash(f'Тіркеу қатесі: {str(e)}', 'error')
         finally:
             cur.close()
             conn.close()
+
     return render_template('register_student.html')
 
-# === ОҚУШЫ КІРУІ (ХЭШТЕУСІЗ) ===
+# === ОҚУШЫ КІРУІ (ТҮЗЕТІЛГЕН) ===
 @app.route('/login_student', methods=['GET', 'POST'])
 def login_student():
     if request.method == 'POST':
-        full_name = request.form['full_name']
-        class_code = request.form['class_code']
+        full_name = request.form['full_name'].strip()
+        class_code = request.form['class_code'].strip().upper()
         password = request.form['password']
+
+        if not full_name or not class_code or not password:
+            flash('Барлық өрістерді толтырыңыз!', 'error')
+            return render_template('login_student.html')
+
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Сынып коды бойынша сыныпты табу
+        cur.execute("SELECT * FROM classes WHERE class_code = %s", (class_code,))
+        cls = cur.fetchone()
+
+        if not cls:
+            flash('Сынып коды қате!', 'error')
+            cur.close()
+            conn.close()
+            return render_template('login_student.html')
+
+        # Оқушыны тексеру - дәл сәйкестік (full_name, class_id, password)
         cur.execute("""
-            SELECT s.*, c.class_name 
+            SELECT s.*, c.class_name, c.class_code 
             FROM students s 
             JOIN classes c ON s.class_id = c.id 
-            WHERE s.full_name = %s AND c.class_code = %s AND s.password = %s
-        """, (full_name, class_code, password))
+            WHERE s.full_name = %s AND s.class_id = %s AND s.password = %s
+        """, (full_name, cls['id'], password))
         student = cur.fetchone()
+
         cur.close()
         conn.close()
+
         if student:
             session['student_id'] = student['id']
             session['student_name'] = student['full_name']
@@ -538,7 +576,8 @@ def login_student():
             session['user_type'] = 'student'
             return redirect(url_for('student_dashboard'))
         else:
-            flash('Ақпарат қате!', 'error')
+            flash('Аты-жөн, сынып коды немесе пароль қате!', 'error')
+
     return render_template('login_student.html')
 
 @app.route('/student_dashboard')
