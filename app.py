@@ -326,7 +326,6 @@ def register_teacher():
         full_name = request.form['full_name']
         phone = request.form['phone']
         password = request.form['password']
-        # НАҚТЫ ПАРОЛЬ САҚТАЛАДЫ (хэштеусіз)
         conn = get_db()
         cur = conn.cursor()
         try:
@@ -349,7 +348,6 @@ def login_teacher():
     if request.method == 'POST':
         phone = request.form['phone']
         password = request.form['password']
-        # НАҚТЫ ПАРОЛЬ САЛЫСТЫРЫЛАДЫ (хэштеусіз)
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM teachers WHERE phone = %s AND password = %s", (phone, password))
@@ -484,7 +482,6 @@ def register_student():
             cur.close()
             conn.close()
             return render_template('register_student.html')
-        # НАҚТЫ ПАРОЛЬ САҚТАЛАДЫ (хэштеусіз)
         try:
             cur.execute("""
                 INSERT INTO students (full_name, class_id, class_password, password) 
@@ -509,7 +506,6 @@ def login_student():
         class_code = request.form['class_code']
         class_password = request.form['class_password']
         password = request.form['password']
-        # НАҚТЫ ПАРОЛЬ САЛЫСТЫРЫЛАДЫ (хэштеусіз)
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
@@ -1090,7 +1086,7 @@ def db_view():
     conn.close()
     return str(data)
 
-# === АДМИН ЖОЛДАРЫ ===
+# === АДМИН ЖОЛДАРЫ (ТҮЗЕТІЛГЕН — FLASH ХАБАРЛАМАСЫЗ) ===
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -1102,9 +1098,10 @@ def admin_login():
             session['admin_name'] = name
             session['is_admin'] = True
             session.permanent = True
-            flash(f'Қош келдіңіз, {name}!', 'success')
+            # ❌ FLASH ХАБАРЛАМАСЫ ЖОҚ — тікелей redirect
             return redirect(url_for('admin_panel'))
         else:
+            # ✅ ТЕК ҚАТЕ FLASH
             flash('Аты-жөні немесе пароль дұрыс емес!', 'error')
             return redirect(url_for('admin_login'))
 
@@ -1114,7 +1111,7 @@ def admin_login():
 def admin_logout():
     session.pop('admin_name', None)
     session.pop('is_admin', None)
-    flash('Сіз шықтыңыз', 'info')
+    # ❌ "Сіз шықтыныз" FLASH ХАБАРЛАМАСЫ ЖОҚ
     return redirect(url_for('index'))
 
 @app.route("/admin")
