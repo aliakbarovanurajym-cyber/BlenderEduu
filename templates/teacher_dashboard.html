@@ -280,7 +280,7 @@
     <div class="modal-content">
         <h2 class="modal-header">📚 Жаңа сынып құру</h2>
 
-        <!-- ҚАДАМ 1: Тек сынып атауы -->
+        <!-- Тек сынып атауы -->
         <div id="step1">
             <div class="form-group">
                 <label class="form-label">Сынып атауы *</label>
@@ -289,13 +289,13 @@
 
             <div style="display: flex; gap: 1rem;">
                 <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Болдырмау</button>
-                <button type="button" class="btn btn-primary" onclick="generateClassCodeAction()">
-                    <i class="fas fa-magic"></i> Кодты генерациялау
+                <button type="button" class="btn btn-primary" onclick="createClassAndGenerateCode()">
+                    <i class="fas fa-magic"></i> Сынып құру
                 </button>
             </div>
         </div>
 
-        <!-- ҚАДАМ 2: Генерацияланған кодты көрсету -->
+        <!-- Генерацияланған кодты көрсету (тек нәтиже) -->
         <div id="step2" style="display: none;">
             <div class="generated-code-box" id="codeBox">
                 <div class="code-label">🎉 Сынып құрылды!</div>
@@ -315,10 +315,7 @@
             </div>
 
             <div style="display: flex; gap: 1rem;">
-                <button type="button" class="btn btn-secondary" onclick="backToStep1()">Өзгерту</button>
-                <button type="button" class="btn btn-primary" onclick="confirmCreateClass()">
-                    <i class="fas fa-check"></i> Растау
-                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Жабу</button>
             </div>
         </div>
     </div>
@@ -380,8 +377,8 @@
         document.getElementById('createClassModal').classList.remove('active');
     }
 
-    // === ҚАДАМ 1 -> ҚАДАМ 2 (код генерациялау) ===
-    function generateClassCodeAction() {
+    // === СЫНЫП ҚҰРУ ЖӘНЕ КОД ГЕНЕРАЦИЯЛАУ (бір қадамда) ===
+    function createClassAndGenerateCode() {
         classNameValue = document.getElementById('classNameInput').value.trim();
 
         if (!classNameValue) {
@@ -391,19 +388,46 @@
 
         generatedClassCode = makeRandomClassCode();
 
-        document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'block';
+        const data = {
+            class_name: classNameValue,
+            class_code: generatedClassCode,
+            class_password: null
+        };
 
-        document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
-        document.getElementById('codeBox').classList.add('active');
-        document.getElementById('confirmClassName').textContent = classNameValue;
-    }
+        fetch('/create_class', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                // Қадам 2-ге өту — кодты көрсету
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
 
-    // === ҚАДАМ 2 -> ҚАДАМ 1 (қайта өңдеу) ===
-    function backToStep1() {
-        document.getElementById('step1').style.display = 'block';
-        document.getElementById('step2').style.display = 'none';
-        document.getElementById('codeBox').classList.remove('active');
+                document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
+                document.getElementById('codeBox').classList.add('active');
+                document.getElementById('confirmClassName').textContent = classNameValue;
+            } else {
+                alert(result.error || 'Қате орын алды');
+            }
+        })
+        .catch((err) => {
+            console.error('Қате:', err);
+            // Егер код бұрын қолданылған болса, жаңа код генерациялап қайта сұрау
+            if (err.error && (err.error.includes('бұрын қолданылған') || err.error.includes('already exists') || err.error.includes('unique') || err.error.includes('Integrity'))) {
+                alert('Бұл код бұрын қолданылған. Жаңа код генерацияланып, қайта сақталды!');
+                createClassAndGenerateCode(); // Рекурсия — жаңа кодпен қайта шақыру
+            } else {
+                alert(err.error || 'Қате орын алды. Серверге қосылу мүмкін емес.');
+            }
+        });
     }
 
     // === КОДТЫ КӨШІРУ ===
@@ -440,46 +464,6 @@
                 btn.classList.remove('copied');
             }, 2000);
         }
-    }
-
-    // === СЫНЫПТЫ РАСТАУ ЖӘНЕ САҚТАУ (қайталанған кодты тексеру) ===
-    function confirmCreateClass() {
-        const data = {
-            class_name: classNameValue,
-            class_code: generatedClassCode,
-            class_password: null
-        };
-
-        fetch('/create_class', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw err; });
-            }
-            return response.json();
-        })
-        .then(result => {
-            if (result.success) {
-                alert('Сынып сәтті құрылды!\n\nАтауы: ' + classNameValue + '\nКод: ' + generatedClassCode);
-                window.location.reload();
-            } else {
-                alert(result.error || 'Қате орын алды');
-            }
-        })
-        .catch((err) => {
-            console.error('Қате:', err);
-            // Егер код бұрын қолданылған болса, жаңа код генерациялау
-            if (err.error && (err.error.includes('бұрын қолданылған') || err.error.includes('already exists') || err.error.includes('unique') || err.error.includes('Integrity'))) {
-                alert('Бұл код бұрын қолданылған (' + generatedClassCode + '). Жаңа код генерацияланды!');
-                generatedClassCode = makeRandomClassCode();
-                document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
-            } else {
-                alert(err.error || 'Қате орын алды. Серверге қосылу мүмкін емес.');
-            }
-        });
     }
 
     // === БАҒАЛАУ МОДАЛЬДІ ТЕРЕЗЕСІ ===
