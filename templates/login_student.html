@@ -4,121 +4,130 @@
 
 {% block extra_css %}
 <style>
-    .auth-container {
-        min-height: calc(100vh - 70px);
+    .auth-wrapper {
+        min-height: calc(100vh - 60px);
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem;
+        padding: 1rem;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     }
     .auth-card {
         background: white;
-        padding: 3rem;
-        border-radius: 30px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        padding: 1.5rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         width: 100%;
-        max-width: 450px;
+        max-width: 400px;
     }
     .auth-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
     }
     .auth-icon {
-        width: 80px;
-        height: 80px;
+        width: 50px;
+        height: 50px;
         background: linear-gradient(135deg, #6366f1, #8b5cf6);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1rem;
-        font-size: 2rem;
+        margin: 0 auto 0.5rem;
+        font-size: 1.3rem;
         color: white;
     }
     .auth-title {
-        font-size: 1.8rem;
-        font-weight: 800;
+        font-size: 1.4rem;
+        font-weight: 700;
         color: #0f172a;
+        margin: 0;
     }
     .auth-subtitle {
         color: #64748b;
-        margin-top: 0.5rem;
+        margin-top: 0.3rem;
+        font-size: 0.9rem;
     }
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
     .form-label {
         display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 700;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
         color: #0f172a;
+        font-size: 0.9rem;
     }
     .form-icon {
         position: relative;
     }
     .form-icon i {
         position: absolute;
-        left: 1rem;
+        left: 0.8rem;
         top: 50%;
         transform: translateY(-50%);
         color: #64748b;
+        font-size: 0.9rem;
     }
     .form-input {
         width: 100%;
-        padding: 1rem 1rem 1rem 3rem;
+        padding: 0.7rem 0.7rem 0.7rem 2.2rem;
         border: 2px solid #e2e8f0;
-        border-radius: 15px;
+        border-radius: 10px;
         font-family: 'Nunito', sans-serif;
-        font-size: 1rem;
+        font-size: 0.95rem;
         transition: all 0.3s;
+        box-sizing: border-box;
     }
     .form-input:focus {
         outline: none;
         border-color: #6366f1;
-        box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
     }
     .btn-login {
         background: linear-gradient(135deg, #6366f1, #8b5cf6);
         color: white;
         border: none;
-        padding: 1rem;
-        border-radius: 15px;
-        font-size: 1.1rem;
-        font-weight: 700;
+        padding: 0.8rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
         cursor: pointer;
         width: 100%;
         transition: all 0.3s;
     }
     .btn-login:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(99,102,241,0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 5px 20px rgba(99,102,241,0.3);
     }
     .auth-footer {
         text-align: center;
-        margin-top: 2rem;
-        padding-top: 2rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
         border-top: 1px solid #e2e8f0;
+        font-size: 0.9rem;
     }
     .auth-footer a {
         color: #6366f1;
         text-decoration: none;
-        font-weight: 700;
+        font-weight: 600;
     }
     .hint-text {
         background: #eef2ff;
-        border-left: 4px solid #6366f1;
-        padding: 1rem;
-        border-radius: 0 10px 10px 0;
-        margin-bottom: 1.5rem;
+        border-left: 3px solid #6366f1;
+        padding: 0.7rem;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 1rem;
         color: #3730a3;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
+    }
+    .hint-text i {
+        margin-right: 0.3rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-container">
+<div class="auth-wrapper">
     <div class="auth-card fade-in">
         <div class="auth-header">
             <div class="auth-icon">
