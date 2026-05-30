@@ -414,13 +414,21 @@ def create_class():
     if 'teacher_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
+    class_name = data.get('class_name')
+    class_code = data.get('class_code')
+    class_password = data.get('class_password')
+    
+    # class_password NULL болса, бос жол қоямыз
+    if not class_password:
+        class_password = ''
+    
     conn = get_db()
     cur = conn.cursor()
     try:
         cur.execute("""
             INSERT INTO classes (teacher_id, class_name, class_code, class_password) 
             VALUES (%s, %s, %s, %s)
-        """, (session['teacher_id'], data.get('class_name'), data.get('class_code'), data.get('class_password')))
+        """, (session['teacher_id'], class_name, class_code, class_password))
         conn.commit()
         return jsonify({'success': True})
     except psycopg2.IntegrityError:
