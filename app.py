@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_from_directory
 import psycopg2
 import psycopg2.extras
-import hashlib
 from datetime import datetime, timedelta
 import os
 from functools import wraps
@@ -52,19 +51,21 @@ def inject_nav_data():
 
 # === АДМИН ДЕКОРАТОРЫ ===
 def admin_required(f):
-    """Тек тіркелген админдерге рұқсат беретін декоратор"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'admin_name' not in session:
+        admin_name = session.get('admin_name')
+        is_admin = session.get('is_admin')
+
+        if not admin_name or not is_admin:
             flash('Админ панеліне кіру үшін авторизациядан өтіңіз', 'error')
             return redirect(url_for('admin_login'))
-        
-        # Қосымша тексеру: сессиядағы аты рұқсат тізімінде бар ма
-        if session['admin_name'] not in ALLOWED_ADMINS:
+
+        if admin_name not in ALLOWED_ADMINS:
             session.pop('admin_name', None)
+            session.pop('is_admin', None)
             flash('Рұқсат жоқ', 'error')
             return redirect(url_for('admin_login'))
-            
+
         return f(*args, **kwargs)
     return decorated_function
 
@@ -72,7 +73,6 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # Таблицаларды құру
     cur.execute("""
         CREATE TABLE IF NOT EXISTS teachers (
             id SERIAL PRIMARY KEY,
@@ -230,7 +230,6 @@ def init_db():
         )
     """)
 
-    # Бастапқы деректер
     cur.execute("SELECT COUNT(*) FROM topics")
     if cur.fetchone()[0] == 0:
         topics_data = [
@@ -320,17 +319,19 @@ def index():
     return render_template('index.html', teachers_count=teachers_count, students_count=students_count, 
                           total_count=teachers_count + students_count, topics=topics)
 
+# === МҰҒАЛІМ ТІРКЕУІ (ХЭШТЕУСІЗ) ===
 @app.route('/register_teacher', methods=['GET', 'POST'])
 def register_teacher():
     if request.method == 'POST':
         full_name = request.form['full_name']
         phone = request.form['phone']
         password = request.form['password']
-        hashed = hashlib.sha256(password.encode()).hexdigest()
+        # НАҚТЫ ПАРОЛЬ САҚТАЛАДЫ (хэштеусіз)
         conn = get_db()
         cur = conn.cursor()
         try:
-            cur.execute("INSERT INTO teachers (full_name, phone, password) VALUES (%s, %s, %s)", (full_name, phone, hashed))
+            cur.execute("INSERT INTO teachers (full_name, phone, password) VALUES (%s, %s, %s)", 
+                       (full_name, phone, password))
             conn.commit()
             flash('Мұғалім сәтті тіркелді!', 'success')
             return redirect(url_for('login_teacher'))
@@ -342,15 +343,16 @@ def register_teacher():
             conn.close()
     return render_template('register_teacher.html')
 
+# === МҰҒАЛІМ КІРУІ (ХЭШТЕУСІЗ) ===
 @app.route('/login_teacher', methods=['GET', 'POST'])
 def login_teacher():
     if request.method == 'POST':
         phone = request.form['phone']
         password = request.form['password']
-        hashed = hashlib.sha256(password.encode()).hexdigest()
+        # НАҚТЫ ПАРОЛЬ САЛЫСТЫРЫЛАДЫ (хэштеусіз)
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM teachers WHERE phone = %s AND password = %s", (phone, hashed))
+        cur.execute("SELECT * FROM teachers WHERE phone = %s AND password = %s", (phone, password))
         teacher = cur.fetchone()
         cur.close()
         conn.close()
@@ -465,6 +467,7 @@ def grade_submission(sub_id):
     conn.close()
     return jsonify({'success': True})
 
+# === ОҚУШЫ ТІРКЕУІ (ХЭШТЕУСІЗ) ===
 @app.route('/register_student', methods=['GET', 'POST'])
 def register_student():
     if request.method == 'POST':
@@ -481,12 +484,12 @@ def register_student():
             cur.close()
             conn.close()
             return render_template('register_student.html')
-        hashed = hashlib.sha256(password.encode()).hexdigest()
+        # НАҚТЫ ПАРОЛЬ САҚТАЛАДЫ (хэштеусіз)
         try:
             cur.execute("""
                 INSERT INTO students (full_name, class_id, class_password, password) 
                 VALUES (%s, %s, %s, %s)
-            """, (full_name, cls['id'], class_password, hashed))
+            """, (full_name, cls['id'], class_password, password))
             conn.commit()
             flash('Оқушы сәтті тіркелді!', 'success')
             return redirect(url_for('login_student'))
@@ -498,6 +501,7 @@ def register_student():
             conn.close()
     return render_template('register_student.html')
 
+# === ОҚУШЫ КІРУІ (ХЭШТЕУСІЗ) ===
 @app.route('/login_student', methods=['GET', 'POST'])
 def login_student():
     if request.method == 'POST':
@@ -505,7 +509,7 @@ def login_student():
         class_code = request.form['class_code']
         class_password = request.form['class_password']
         password = request.form['password']
-        hashed = hashlib.sha256(password.encode()).hexdigest()
+        # НАҚТЫ ПАРОЛЬ САЛЫСТЫРЫЛАДЫ (хэштеусіз)
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
@@ -513,7 +517,7 @@ def login_student():
             FROM students s 
             JOIN classes c ON s.class_id = c.id 
             WHERE s.full_name = %s AND c.class_code = %s AND s.class_password = %s AND s.password = %s
-        """, (full_name, class_code, class_password, hashed))
+        """, (full_name, class_code, class_password, password))
         student = cur.fetchone()
         cur.close()
         conn.close()
@@ -1090,26 +1094,24 @@ def db_view():
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Админ кіру беті"""
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         password = request.form.get('password', '').strip()
-        
-        # Тек екі адамды тексеру
+
         if name in ALLOWED_ADMINS and ALLOWED_ADMINS[name] == password:
             session['admin_name'] = name
             session['is_admin'] = True
+            session.permanent = True
             flash(f'Қош келдіңіз, {name}!', 'success')
             return redirect(url_for('admin_panel'))
         else:
             flash('Аты-жөні немесе пароль дұрыс емес!', 'error')
             return redirect(url_for('admin_login'))
-    
+
     return render_template('admin_login.html')
 
 @app.route('/admin/logout')
 def admin_logout():
-    """Админ шығу"""
     session.pop('admin_name', None)
     session.pop('is_admin', None)
     flash('Сіз шықтыңыз', 'info')
@@ -1118,7 +1120,6 @@ def admin_logout():
 @app.route("/admin")
 @admin_required
 def admin_panel():
-    """Негізгі админ панелі"""
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM students")
@@ -1127,7 +1128,10 @@ def admin_panel():
     teachers = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template("admin.html", students=students, teachers=teachers)
+    return render_template("admin.html", 
+                         students=students, 
+                         teachers=teachers,
+                         admin_name=session.get('admin_name', 'Әкімші'))
 
 @app.route('/faq')
 def faq_page():
