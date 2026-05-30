@@ -145,7 +145,7 @@
     <div class="section-card">
         <div class="section-header">
             <h2 class="section-title">📚 Менің сыныптарым</h2>
-            <button class="btn btn-primary" onclick="openModal()">
+            <button class="btn btn-primary" onclick="openCreateModal()">
                 <i class="fas fa-plus"></i> Сынып құру
             </button>
         </div>
@@ -288,8 +288,8 @@
             </div>
 
             <div style="display: flex; gap: 1rem;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Болдырмау</button>
-                <button type="button" class="btn btn-primary" onclick="generateCode()">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Болдырмау</button>
+                <button type="button" class="btn btn-primary" onclick="generateClassCodeAction()">
                     <i class="fas fa-magic"></i> Кодты генерациялау
                 </button>
             </div>
@@ -299,9 +299,9 @@
         <div id="step2" style="display: none;">
             <div class="generated-code-box" id="codeBox">
                 <div class="code-label">🎉 Сынып құрылды!</div>
-                <div class="code-value" id="generatedCode">AB12CD</div>
+                <div class="code-value" id="generatedCodeDisplay">AB12CD</div>
                 <br>
-                <button class="copy-btn" id="copyBtn" onclick="copyCode()">
+                <button class="copy-btn" id="copyBtn" onclick="copyClassCode()">
                     <i class="fas fa-copy"></i> Кодты көшіру
                 </button>
             </div>
@@ -316,7 +316,7 @@
 
             <div style="display: flex; gap: 1rem;">
                 <button type="button" class="btn btn-secondary" onclick="backToStep1()">Өзгерту</button>
-                <button type="button" class="btn btn-primary" onclick="confirmCreate()">
+                <button type="button" class="btn btn-primary" onclick="confirmCreateClass()">
                     <i class="fas fa-check"></i> Растау
                 </button>
             </div>
@@ -353,7 +353,8 @@
     let generatedClassCode = '';
     let classNameValue = '';
 
-    function generateClassCode() {
+    // === СЫНЫП КОДЫН ГЕНЕРАЦИЯЛАУ (кездейсоқ код жасау) ===
+    function makeRandomClassCode() {
         const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         const numbers = '0123456789';
         let code = '';
@@ -363,20 +364,24 @@
         return code;
     }
 
-    function openModal() {
+    // === МОДАЛЬДІ ТЕРЕЗЕНІ АШУ ===
+    function openCreateModal() {
         document.getElementById('createClassModal').classList.add('active');
-        // Қадам 1-ге қайту
         document.getElementById('step1').style.display = 'block';
         document.getElementById('step2').style.display = 'none';
         document.getElementById('classNameInput').value = '';
+        document.getElementById('codeBox').classList.remove('active');
         generatedClassCode = '';
+        classNameValue = '';
     }
 
-    function closeModal() {
+    // === МОДАЛЬДІ ТЕРЕЗЕНІ ЖАБУ ===
+    function closeCreateModal() {
         document.getElementById('createClassModal').classList.remove('active');
     }
 
-    function generateCode() {
+    // === ҚАДАМ 1 -> ҚАДАМ 2 (код генерациялау) ===
+    function generateClassCodeAction() {
         classNameValue = document.getElementById('classNameInput').value.trim();
 
         if (!classNameValue) {
@@ -384,37 +389,43 @@
             return;
         }
 
-        generatedClassCode = generateClassCode();
+        generatedClassCode = makeRandomClassCode();
 
-        // Қадам 2-ге өту
         document.getElementById('step1').style.display = 'none';
         document.getElementById('step2').style.display = 'block';
 
-        // Кодты көрсету
-        document.getElementById('generatedCode').textContent = generatedClassCode;
+        document.getElementById('generatedCodeDisplay').textContent = generatedClassCode;
         document.getElementById('codeBox').classList.add('active');
-
-        // Растау ақпаратын жаңарту (тек атау)
         document.getElementById('confirmClassName').textContent = classNameValue;
     }
 
+    // === ҚАДАМ 2 -> ҚАДАМ 1 (қайта өңдеу) ===
     function backToStep1() {
         document.getElementById('step1').style.display = 'block';
         document.getElementById('step2').style.display = 'none';
         document.getElementById('codeBox').classList.remove('active');
     }
 
-    function copyCode() {
-        navigator.clipboard.writeText(generatedClassCode).then(() => {
-            const btn = document.getElementById('copyBtn');
-            btn.innerHTML = '<i class="fas fa-check"></i> Көшірілді!';
-            btn.classList.add('copied');
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fas fa-copy"></i> Кодты көшіру';
-                btn.classList.remove('copied');
-            }, 2000);
-        }).catch(() => {
-            // Егер clipboard API жұмыс жасамаса
+    // === КОДТЫ КӨШІРУ ===
+    function copyClassCode() {
+        const btn = document.getElementById('copyBtn');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(generatedClassCode).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> Көшірілді!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> Кодты көшіру';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                fallbackCopy();
+            });
+        } else {
+            fallbackCopy();
+        }
+
+        function fallbackCopy() {
             const textarea = document.createElement('textarea');
             textarea.value = generatedClassCode;
             document.body.appendChild(textarea);
@@ -422,20 +433,21 @@
             document.execCommand('copy');
             document.body.removeChild(textarea);
 
-            const btn = document.getElementById('copyBtn');
             btn.innerHTML = '<i class="fas fa-check"></i> Көшірілді!';
             btn.classList.add('copied');
             setTimeout(() => {
                 btn.innerHTML = '<i class="fas fa-copy"></i> Кодты көшіру';
                 btn.classList.remove('copied');
             }, 2000);
-        });
+        }
     }
 
-    function confirmCreate() {
+    // === СЫНЫПТЫ РАСТАУ ЖӘНЕ САҚТАУ ===
+    function confirmCreateClass() {
         const data = {
             class_name: classNameValue,
-            class_code: generatedClassCode
+            class_code: generatedClassCode,
+            class_password: null
         };
 
         fetch('/create_class', {
@@ -452,11 +464,13 @@
                 alert(result.error || 'Қате орын алды');
             }
         })
-        .catch(() => {
-            alert('Қате орын алды. Қайта байқап көріңіз.');
+        .catch((err) => {
+            console.error('Қате:', err);
+            alert('Қате орын алды. Серверге қосылу мүмкін емес.');
         });
     }
 
+    // === БАҒАЛАУ МОДАЛЬДІ ТЕРЕЗЕСІ ===
     function openGradeModal(subId) {
         currentSubmissionId = subId;
         document.getElementById('submissionId').value = subId;
@@ -491,8 +505,9 @@
         }
     });
 
+    // === МОДАЛЬДІ ТЕРЕЗЕНІ ФОНҒА БАСҚАНДА ЖАБУ ===
     document.getElementById('createClassModal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
+        if (e.target === this) closeCreateModal();
     });
     document.getElementById('gradeModal').addEventListener('click', function(e) {
         if (e.target === this) closeGradeModal();
