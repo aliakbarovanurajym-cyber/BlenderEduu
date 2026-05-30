@@ -417,11 +417,11 @@ def create_class():
     class_name = data.get('class_name')
     class_code = data.get('class_code')
     class_password = data.get('class_password')
-    
+
     # class_password NULL болса, бос жол қоямыз
     if not class_password:
         class_password = ''
-    
+
     conn = get_db()
     cur = conn.cursor()
     try:
@@ -492,11 +492,19 @@ def register_student():
         try:
             cur.execute("""
                 INSERT INTO students (full_name, class_id, password) 
-                VALUES (%s, %s, %s)
+                VALUES (%s, %s, %s) RETURNING id
             """, (full_name, cls['id'], password))
+            student_id = cur.fetchone()['id']
             conn.commit()
+
+            # Тіркелген соң автоматты түрде кіру
+            session['student_id'] = student_id
+            session['student_name'] = full_name
+            session['class_id'] = cls['id']
+            session['user_type'] = 'student'
+
             flash('Оқушы сәтті тіркелді!', 'success')
-            return redirect(url_for('login_student'))
+            return redirect(url_for('student_dashboard'))
         except Exception as e:
             conn.rollback()
             flash('Тіркеу қатесі!', 'error')
