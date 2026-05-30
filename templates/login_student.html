@@ -4,13 +4,26 @@
 
 {% block extra_css %}
 <style>
+    /* Бұл беттегі content блокты base.html стилінен босату */
+    .page-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
     .auth-wrapper {
-        min-height: calc(100vh - 60px);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 1rem;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        z-index: 1;
     }
     .auth-card {
         background: white;
@@ -19,6 +32,8 @@
         box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         width: 100%;
         max-width: 400px;
+        max-height: 90vh;
+        overflow-y: auto;
     }
     .auth-header {
         text-align: center;
@@ -127,55 +142,58 @@
 {% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card fade-in">
-        <div class="auth-header">
-            <div class="auth-icon">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-            <h1 class="auth-title">Оқушы кіру</h1>
-            <p class="auth-subtitle">Аккаунтыңызға кіріңіз</p>
-        </div>
-
-        <div class="hint-text">
-            <i class="fas fa-info-circle"></i> 
-            Тіркелген кездегі <strong>аты-жөніңіз</strong>, <strong>сынып коды</strong> және <strong>жеке пароль</strong> енгізіңіз.
-        </div>
-
-        <form class="auth-form" method="POST" action="/login_student">
-            <div class="form-group">
-                <label class="form-label">Аты-жөні</label>
-                <div class="form-icon">
-                    <i class="fas fa-user"></i>
-                    <input type="text" name="full_name" class="form-input" placeholder="Толық аты-жөні" required>
+<!-- base.html margin/padding-нан толық босату -->
+<div class="page-content">
+    <div class="auth-wrapper">
+        <div class="auth-card fade-in">
+            <div class="auth-header">
+                <div class="auth-icon">
+                    <i class="fas fa-user-graduate"></i>
                 </div>
+                <h1 class="auth-title">Оқушы кіру</h1>
+                <p class="auth-subtitle">Аккаунтыңызға кіріңіз</p>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Сынып коды</label>
-                <div class="form-icon">
-                    <i class="fas fa-key"></i>
-                    <input type="text" name="class_code" class="form-input" placeholder="Мысалы: HM44XU" required
-                           style="text-transform: uppercase;"
-                           oninput="this.value = this.value.toUpperCase()">
+            <div class="hint-text">
+                <i class="fas fa-info-circle"></i> 
+                Тіркелген кездегі <strong>аты-жөніңіз</strong>, <strong>сынып коды</strong> және <strong>жеке пароль</strong> енгізіңіз.
+            </div>
+
+            <form class="auth-form" method="POST" action="/login_student">
+                <div class="form-group">
+                    <label class="form-label">Аты-жөні</label>
+                    <div class="form-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" name="full_name" class="form-input" placeholder="Толық аты-жөні" required>
+                    </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label">Жеке пароль</label>
-                <div class="form-icon">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" name="password" class="form-input" placeholder="Жеке пароль" required>
+                <div class="form-group">
+                    <label class="form-label">Сынып коды</label>
+                    <div class="form-icon">
+                        <i class="fas fa-key"></i>
+                        <input type="text" name="class_code" class="form-input" placeholder="Мысалы: HM44XU" required
+                               style="text-transform: uppercase;"
+                               oninput="this.value = this.value.toUpperCase()">
+                    </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">Жеке пароль</label>
+                    <div class="form-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="password" class="form-input" placeholder="Жеке пароль" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Кіру
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Аккаунтыңыз жоқ па? <a href="/register_student">Тіркелу</a></p>
             </div>
-
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> Кіру
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            <p>Аккаунтыңыз жоқ па? <a href="/register_student">Тіркелу</a></p>
         </div>
     </div>
 </div>
