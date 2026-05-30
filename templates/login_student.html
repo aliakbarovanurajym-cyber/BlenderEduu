@@ -5,14 +5,13 @@
 {% block extra_css %}
 <style>
     .auth-container {
-    min-height: calc(100vh - 70px);
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 auto;
-}
-
+        min-height: calc(100vh - 70px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    }
     .auth-card {
         background: white;
         padding: 3rem;
@@ -20,14 +19,11 @@
         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         width: 100%;
         max-width: 450px;
-        margin: 0 auto;
     }
-
     .auth-header {
         text-align: center;
         margin-bottom: 2rem;
     }
-
     .auth-icon {
         width: 80px;
         height: 80px;
@@ -40,26 +36,27 @@
         font-size: 2rem;
         color: white;
     }
-
     .auth-title {
         font-size: 1.8rem;
         font-weight: 800;
-        color: var(--dark);
+        color: #0f172a;
     }
-
     .auth-subtitle {
         color: #64748b;
         margin-top: 0.5rem;
     }
-
-    .auth-form {
-        margin-top: 2rem;
+    .form-group {
+        margin-bottom: 1.5rem;
     }
-
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
     .form-icon {
         position: relative;
     }
-
     .form-icon i {
         position: absolute;
         left: 1rem;
@@ -67,22 +64,55 @@
         transform: translateY(-50%);
         color: #64748b;
     }
-
-    .form-icon input {
-        padding-left: 3rem;
+    .form-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        font-family: 'Nunito', sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s;
     }
-
+    .form-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+    }
+    .btn-login {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 15px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.3s;
+    }
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(99,102,241,0.4);
+    }
     .auth-footer {
         text-align: center;
         margin-top: 2rem;
         padding-top: 2rem;
-        border-top: 1px solid #f1f5f9;
+        border-top: 1px solid #e2e8f0;
     }
-
     .auth-footer a {
         color: #6366f1;
         text-decoration: none;
         font-weight: 700;
+    }
+    .hint-text {
+        background: #eef2ff;
+        border-left: 4px solid #6366f1;
+        padding: 1rem;
+        border-radius: 0 10px 10px 0;
+        margin-bottom: 1.5rem;
+        color: #3730a3;
+        font-size: 0.9rem;
     }
 </style>
 {% endblock %}
@@ -98,6 +128,11 @@
             <p class="auth-subtitle">Аккаунтыңызға кіріңіз</p>
         </div>
 
+        <div class="hint-text">
+            <i class="fas fa-info-circle"></i> 
+            Тіркелген кездегі <strong>аты-жөніңіз</strong>, <strong>сынып коды</strong> және <strong>жеке пароль</strong> енгізіңіз.
+        </div>
+
         <form class="auth-form" method="POST" action="/login_student">
             <div class="form-group">
                 <label class="form-label">Аты-жөні</label>
@@ -110,11 +145,12 @@
             <div class="form-group">
                 <label class="form-label">Сынып коды</label>
                 <div class="form-icon">
-                    <i class="fas fa-users"></i>
-                    <input type="text" name="class_code" class="form-input" placeholder="Мысалы: 6A2026" required>
+                    <i class="fas fa-key"></i>
+                    <input type="text" name="class_code" class="form-input" placeholder="Мысалы: HM44XU" required
+                           style="text-transform: uppercase;"
+                           oninput="this.value = this.value.toUpperCase()">
                 </div>
             </div>
-
 
             <div class="form-group">
                 <label class="form-label">Жеке пароль</label>
@@ -124,14 +160,13 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-success" style="width: 100%; justify-content: center; padding: 1rem;">
+            <button type="submit" class="btn-login">
                 <i class="fas fa-sign-in-alt"></i> Кіру
             </button>
         </form>
 
         <div class="auth-footer">
             <p>Аккаунтыңыз жоқ па? <a href="/register_student">Тіркелу</a></p>
-            <p style="margin-top: 1rem;"><a href="/login_teacher">Мұғалім ретінде кіру</a></p>
         </div>
     </div>
 </div>
