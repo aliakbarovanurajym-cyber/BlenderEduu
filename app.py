@@ -96,6 +96,7 @@ def init_db():
             id SERIAL PRIMARY KEY,
             full_name VARCHAR(255) NOT NULL,
             class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+            class_password VARCHAR(255) DEFAULT '',
             password VARCHAR(255) NOT NULL,
             xp INTEGER DEFAULT 0,
             level INTEGER DEFAULT 1,
@@ -226,7 +227,13 @@ def init_db():
         )
     """)
 
-    conn.commit()
+    # Егер бұрынғы кестеде class_password бағанасы жоқ болса, қосу
+    try:
+        cur.execute("ALTER TABLE students ADD COLUMN IF NOT EXISTS class_password VARCHAR(255) DEFAULT ''")
+        conn.commit()
+    except:
+        pass
+
     cur.close()
     conn.close()
 
@@ -292,9 +299,9 @@ def register_student():
         try:
             # 5. Оқушыны базаға қосу
             cur.execute("""
-                INSERT INTO students (full_name, class_id, password) 
-                VALUES (%s, %s, %s) RETURNING id
-            """, (full_name, cls['id'], password))
+                INSERT INTO students (full_name, class_id, class_password, password) 
+                VALUES (%s, %s, %s, %s) RETURNING id
+            """, (full_name, cls['id'], '', password))
             student_id = cur.fetchone()['id']
             conn.commit()
 
